@@ -18,8 +18,10 @@ public class BookService {
         return repo.findById(id).map(b -> {
             b.setTitle(newBook.getTitle());
             b.setAuthor(newBook.getAuthor());
-            b.setYear(newBook.getYear());
+            b.setCategory(newBook.getCategory());
             b.setQuantity(newBook.getQuantity());
+            b.setPublishDate(newBook.getPublishDate());
+            b.setPdfPath(newBook.getPdfPath());
             return repo.save(b);
         }).orElse(null);
     }

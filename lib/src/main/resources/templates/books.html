@@ -1,32 +1,39 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Danh sách sách</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 <div class="container mt-4">
-    <h2 class="mb-3">Danh sách sách</h2>
-
-    <table class="table table-bordered table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>Tên sách</th>
-                <th>Tác giả</th>
-                <th>Thể loại</th>
-            </tr>
+    <table class="table table-hover shadow-sm">
+        <thead class="table-primary">
+        <tr>
+            <th>ID</th>
+            <th>Tên sách</th>
+            <th>Tác giả</th>
+            <th>Ngày Public</th>
+            <th>Số lượng</th>
+            <th>Thao tác</th>
+            <th>Xem chi tiết</th>
+        </tr>
         </thead>
         <tbody>
-            <tr th:each="book : ${books}">
-                <td th:text="${book.id}">1</td>
-                <td th:text="${book.title}">Tên sách</td>
-                <td th:text="${book.author}">Tác giả</td>
-                <td th:text="${book.category}">Thể loại</td>
-            </tr>
+        <tr th:each="b : ${books}">
+            <td th:text="${b.id}"></td>
+            <td th:text="${b.title}"></td>
+            <td th:text="${b.author}"></td>
+            <td th:text="${b.publishDate}"></td>
+            <td th:text="${b.quantity}"></td>
+            <td>
+                <a th:href="@{'/books/edit/' + ${b.id}}" class="btn btn-warning btn-sm">✏️ Sửa</a>
+            </td>
+            <td>
+                <a th:href="@{'/book_detail/' + ${b.id}}" class="btn btn-info btn-sm">🔍 Xem</a>
+            </td>
+        </tr>
         </tbody>
     </table>
+    <a href="/books/new"  class="btn btn-warning btn-sm">Thêm sách</a>
 </div>
 </body>
 </html>

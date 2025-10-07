@@ -1,5 +1,7 @@
 package com.example.lib.model;
 
+import java.time.LocalDate;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,8 +18,10 @@ public class Book {
 
     private String title;
     private String author;
-    private int year;
+    private String category;
+    private LocalDate publishDate;
     private int quantity;
+    private String pdfPath;
     
     public Long getId() {
         return id;
@@ -37,11 +41,11 @@ public class Book {
     public void setAuthor(String author) {
         this.author = author;
     }
-    public int getYear() {
-        return year;
+    public String getCategory() {
+        return category;
     }
-    public void setYear(int year) {
-        this.year = year;
+    public void setCategory(String category) {
+        this.category = category;
     }
     public int getQuantity() {
         return quantity;
@@ -49,5 +53,16 @@ public class Book {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
-    
+    public LocalDate getPublishDate() {
+        return publishDate;
+    }
+    public void setPublishDate(LocalDate publishDate) {
+        this.publishDate = publishDate;
+    }
+    public String getPdfPath() {
+        return pdfPath;
+    }
+    public void setPdfPath(String pdf_path) {
+        this.pdfPath = pdf_path;
+    }
 }

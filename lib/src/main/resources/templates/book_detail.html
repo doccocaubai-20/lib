@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết sách</title>
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+</head>
+<body class="bg-light p-4">
+
+<div class="container">
+    <div class="card shadow p-4">
+        <h2 class="text-center text-primary mb-4">Chi tiết sách</h2>
+
+        <p><b>ID:</b> <span th:text="${book.id}"></span></p>
+        <p><b>Tên sách:</b> <span th:text="${book.title}"></span></p>
+        <p><b>Tác giả:</b> <span th:text="${book.author}"></span></p>
+        <p><b>Thể loại:</b> <span th:text="${book.category}"></span></p>
+        <p><b>Ngày xuất bản:</b> <span th:text="${book.publishDate}"></span></p>
+        <p><b>Số lượng:</b> <span th:text="${book.quantity}"></span></p>
+
+        <p th:if="${book.pdfPath}">
+            <b>File PDF:</b>
+            <a th:href="@{'/books/view/' + ${book.id}}" target="_blank">Xem PDF</a>
+        </p>    
+        
+        <div class="mt-3">
+            <a href="/books" class="btn btn-secondary">⬅ Quay lại danh sách</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
