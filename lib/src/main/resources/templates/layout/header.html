@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:fragment="head">
+    <meta charset="UTF-8">
+    <title>Quản lý thư viện</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body th:fragment="header">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">📚 Library</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+         <div class="ms-auto">
+        <!-- Nếu đã login -->
+        <div th:if="${session.user != null}" class="d-flex align-items-center">
+            <span class="me-3">Xin chào, <b th:text="${session.user.username}"></b>!</span>
+            <a href="/logout" class="btn btn-sm btn-outline-danger">Đăng xuất</a>
+        </div>
+
+        <!-- Nếu chưa login -->
+        <div th:if="${session.user == null}">
+            <a href="/login" class="btn btn-sm btn-outline-primary">Đăng nhập</a>
+        </div>
+    </div>
+    </div>
+</nav>
+<div class="container">
