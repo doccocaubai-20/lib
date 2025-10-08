@@ -62,7 +62,7 @@ public class Book {
     public String getPdfPath() {
         return pdfPath;
     }
-    public void setPdfPath(String pdf_path) {
-        this.pdfPath = pdf_path;
+    public void setPdfPath(String pdfPath) {
+        this.pdfPath = pdfPath;
     }
 }

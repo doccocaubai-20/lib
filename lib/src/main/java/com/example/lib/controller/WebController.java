@@ -41,7 +41,7 @@ public class WebController {
     public String books(Model model) {
         model.addAttribute("books", bookRepo.findAll());
         return "books";
-    }
+    } 
 
     @GetMapping("/book_detail/{id}")
     public String viewBook(@PathVariable Long id, Model model) {
@@ -65,15 +65,39 @@ public class WebController {
                 .orElse("redirect:/books");
     }
 
-    @GetMapping("/books/new")
-    public String showAddForm(Model model) {
-        model.addAttribute("book", new Book());
-        return "addbook";
-    }
+    @GetMapping("/books/add")
+    public String showAddBookForm(HttpSession session) {
+        User user = (User)session.getAttribute("user");
+        // kiểm tra nếu chưa đăng nhập hoặc không phải admin
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+        return "redirect:/index";
+        }
+        return "addbook"; // admin mới được thêm sách
+    }   
 
     @PostMapping("/books")
     public String addBook(@ModelAttribute Book book) {
         bookRepo.save(book);
+        return "redirect:/books";
+    }
+
+    @GetMapping("/books/edit/{id}")
+    public String editBook(@PathVariable Long id, Model model){
+        return bookRepo.findById(id).map(book -> {
+            model.addAttribute("book", book);
+            return "book_edit";
+        }).orElse("redirect:/books");
+    }
+
+    @PostMapping("/books/update")
+    public String updateBook(@ModelAttribute Book book) {
+        bookRepo.save(book);
+        return "redirect:/books";
+    }
+
+    @GetMapping("/books/delete/{id}")
+    public String deleteBook(@PathVariable Long id) {
+        bookRepo.deleteById(id);
         return "redirect:/books";
     }
 
@@ -117,7 +141,7 @@ public class WebController {
         User user = new User();
         user.setUsername(username);
         user.setPassword(password);
-        user.setRole("user");
+        user.setRole("USER");
         userRepo.save(user);
 
         return "redirect:/login";
