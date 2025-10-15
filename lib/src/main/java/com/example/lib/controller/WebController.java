@@ -1,53 +1,66 @@
 package com.example.lib.controller;
 
+import com.example.lib.model.*;
+import com.example.lib.repository.*;
+import com.example.lib.service.UserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.lib.model.Book;
-import com.example.lib.model.User;
-import com.example.lib.repository.BookRepository;
-import com.example.lib.repository.UserRepository;
-
-import jakarta.servlet.http.HttpSession;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class WebController {
 
     private final BookRepository bookRepo;
     private final UserRepository userRepo;
+    private final AuthorRepository authorRepo;
+    private final CategoryRepository categoryRepo;
+    private final ReviewRepository reviewRepo;
+    private final UserService userService;
 
-    public WebController(BookRepository bookRepo, UserRepository userRepo) {
+    // Sử dụng constructor injection để Spring tự động cung cấp các bean cần thiết
+    public WebController(BookRepository bookRepo, UserRepository userRepo,
+                         AuthorRepository authorRepo, CategoryRepository categoryRepo,
+                         ReviewRepository reviewRepo, UserService userService) {
         this.bookRepo = bookRepo;
         this.userRepo = userRepo;
+        this.authorRepo = authorRepo;
+        this.categoryRepo = categoryRepo;
+        this.reviewRepo = reviewRepo;
+        this.userService = userService;
     }
 
-    // ==================== Root & Index ====================
+    // ==================== Trang chính và các trang chung ====================
+
     @GetMapping("/")
-    public String root(HttpSession session) {
-        return (session.getAttribute("user") != null) ? "redirect:/index" : "redirect:/login";
+    public String root() {
+        return "redirect:/index";
     }
 
     @GetMapping("/index")
-    public String index(HttpSession session) {
-        if (session.getAttribute("user") == null) {
-            return "redirect:/login";
-        }
+    public String indexPage() {
         return "index";
     }
 
-    // ==================== Book Management ====================
+    // ==================== Quản lý Sách (Book Management) ====================
+
     @GetMapping("/books")
-    public String books(Model model) {
+    public String listBooks(Model model) {
         model.addAttribute("books", bookRepo.findAll());
         return "books";
-    } 
+    }
 
-    @GetMapping("/book_detail/{id}")
-    public String viewBook(@PathVariable Long id, Model model) {
+    @GetMapping("/books/detail/{id}")
+    public String viewBookDetail(@PathVariable Long id, Model model) {
         return bookRepo.findById(id)
                 .map(book -> {
                     model.addAttribute("book", book);
+                    // Lấy tất cả review của sách này và gửi sang view
+                    model.addAttribute("reviews", reviewRepo.findByBookId(id));
+                    // Gửi một đối tượng review rỗng để form có thể binding
+                    model.addAttribute("newReview", new Review());
                     return "book_detail";
                 })
                 .orElse("redirect:/books");
@@ -56,70 +69,95 @@ public class WebController {
     @GetMapping("/books/view/{id}")
     public String viewBookPdf(@PathVariable Long id, Model model) {
         return bookRepo.findById(id)
-                .filter(book -> book.getPdfPath() != null)
                 .map(book -> {
                     model.addAttribute("book", book);
-                    model.addAttribute("pdfUrl", book.getPdfPath());
                     return "book_view";
                 })
                 .orElse("redirect:/books");
     }
 
+    // Hiển thị form thêm sách (chỉ cho ADMIN)
     @GetMapping("/books/add")
-    public String showAddBookForm(HttpSession session) {
-        User user = (User)session.getAttribute("user");
-        // kiểm tra nếu chưa đăng nhập hoặc không phải admin
-        if (user == null || !"ADMIN".equals(user.getRole())) {
-        return "redirect:/index";
-        }
-        return "addbook"; // admin mới được thêm sách
-    }   
+    public String showAddBookForm(Model model) {
+        model.addAttribute("book", new Book()); // Gửi một đối tượng Book rỗng
+        model.addAttribute("authors", authorRepo.findAll()); // Gửi danh sách tác giả
+        model.addAttribute("categories", categoryRepo.findAll()); // Gửi danh sách thể loại
+        return "addbook";
+    }
 
-    @PostMapping("/books")
-    public String addBook(@ModelAttribute Book book) {
+    // Xử lý việc thêm sách mới
+    @PostMapping("/books/add")
+    public String addBook(@ModelAttribute Book book, RedirectAttributes redirectAttributes) {
         bookRepo.save(book);
+        redirectAttributes.addFlashAttribute("successMessage", "Thêm sách thành công!");
         return "redirect:/books";
     }
 
+    // Hiển thị form sửa thông tin sách (chỉ cho ADMIN)
     @GetMapping("/books/edit/{id}")
-    public String editBook(@PathVariable Long id, Model model){
+    public String showEditBookForm(@PathVariable Long id, Model model) {
         return bookRepo.findById(id).map(book -> {
             model.addAttribute("book", book);
+            model.addAttribute("authors", authorRepo.findAll());
+            model.addAttribute("categories", categoryRepo.findAll());
             return "book_edit";
         }).orElse("redirect:/books");
     }
 
+    // Xử lý việc cập nhật sách
     @PostMapping("/books/update")
-    public String updateBook(@ModelAttribute Book book) {
+    public String updateBook(@ModelAttribute Book book, RedirectAttributes redirectAttributes) {
         bookRepo.save(book);
+        redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sách thành công!");
         return "redirect:/books";
     }
 
+    // Xóa sách (chỉ cho ADMIN)
     @GetMapping("/books/delete/{id}")
-    public String deleteBook(@PathVariable Long id) {
-        bookRepo.deleteById(id);
+    public String deleteBook(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        if (bookRepo.existsById(id)) {
+            bookRepo.deleteById(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Xóa sách thành công!");
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy sách để xóa.");
+        }
         return "redirect:/books";
     }
 
-    // ==================== Authentication ====================
-    @GetMapping("/login")
-    public String loginPage() {
-        return "login";
-    }
+    // ==================== Quản lý Đánh giá (Review Management) ====================
+    
+    @PostMapping("/reviews/add")
+    public String addReview(@ModelAttribute("newReview") Review review,
+                            @RequestParam("bookId") Long bookId,
+                            Authentication authentication, // Lấy thông tin người dùng đang đăng nhập
+                            RedirectAttributes redirectAttributes) {
 
-    @PostMapping("/login")
-    public String login(@RequestParam String username,
-                        @RequestParam String password,
-                        HttpSession session,
-                        Model model) {
+        // Lấy username từ Principal
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
 
-        var user = userRepo.findByUsername(username);
-        if (user != null && user.getPassword().equals(password)) {
-            session.setAttribute("user", user);
-            return "redirect:/index";
+        // Tìm user và book từ database
+        User user = userRepo.findByUsername(username);
+        Book book = bookRepo.findById(bookId).orElse(null);
+
+        if (user != null && book != null) {
+            review.setUser(user);
+            review.setBook(book);
+            reviewRepo.save(review);
+            redirectAttributes.addFlashAttribute("successMessage", "Cảm ơn bạn đã gửi đánh giá!");
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi xảy ra.");
         }
 
-        model.addAttribute("error", "Sai tài khoản hoặc mật khẩu");
+        return "redirect:/books/detail/" + bookId;
+    }
+
+
+    // ==================== Xác thực (Authentication) ====================
+    // Spring Security sẽ xử lý logic, Controller chỉ cần trả về view
+
+    @GetMapping("/login")
+    public String loginPage() {
         return "login";
     }
 
@@ -129,27 +167,21 @@ public class WebController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String username,
-                           @RequestParam String password,
-                           Model model) {
+    public String handleRegistration(@RequestParam String username,
+                                     @RequestParam String password,
+                                     RedirectAttributes redirectAttributes) {
 
         if (userRepo.findByUsername(username) != null) {
-            model.addAttribute("error", "Tên đăng nhập đã tồn tại");
-            return "register";
+            redirectAttributes.addFlashAttribute("error", "Tên đăng nhập đã tồn tại.");
+            return "redirect:/register";
         }
 
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(password);
-        user.setRole("USER");
-        userRepo.save(user);
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(password); // Mật khẩu sẽ được mã hóa trong service
+        userService.register(newUser);
 
-        return "redirect:/login";
-    }
-
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        session.invalidate();
+        redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
         return "redirect:/login";
     }
 }

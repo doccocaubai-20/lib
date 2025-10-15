@@ -1,33 +1,117 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Chi tiết sách</title>
-    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
-</head>
-<body class="bg-light p-4">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6" lang="vi">
+<head th:replace="~{layout/header :: head(pageTitle=${book.title})}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
 
-<div class="container">
-    <div class="card shadow p-4">
-        <h2 class="text-center text-primary mb-4">Chi tiết sách</h2>
+<div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+    <span th:text="${successMessage}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <span th:text="${errorMessage}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
 
-        <p><b>ID:</b> <span th:text="${book.id}"></span></p>
-        <p><b>Tên sách:</b> <span th:text="${book.title}"></span></p>
-        <p><b>Tác giả:</b> <span th:text="${book.author}"></span></p>
-        <p><b>Thể loại:</b> <span th:text="${book.category}"></span></p>
-        <p><b>Ngày xuất bản:</b> <span th:text="${book.publishDate}"></span></p>
-        <p><b>Số lượng:</b> <span th:text="${book.quantity}"></span></p>
+<div class="card shadow-lg border-0">
+    <div class="card-body p-5">
+        <div class="row">
+            <div class="col-md-4 text-center">
+                <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? book.image : 'https://via.placeholder.com/300x400.png?text=Book+Cover'}"
+                     class="img-fluid rounded shadow-sm book-detail-img" alt="Book Cover">
+            </div>
+            <div class="col-md-8">
+                <h1 th:text="${book.title}" class="display-5">Tên sách</h1>
+                <p class="lead text-muted">bởi <span th:text="${book.author?.name ?: 'Chưa xác định'}">Tên tác giả</span></p>
+                <hr>
 
-        <p th:if="${book.pdfPath}">
-            <b>File PDF:</b>
-            <a th:href="@{'/books/view/' + ${book.id}}" target="_blank">Xem PDF</a>
-        </p>    
-        
-        <div class="mt-3">
-            <a href="/books" class="btn btn-secondary">⬅ Quay lại danh sách</a>
+                <p><strong>Thể loại:</strong> <span class="badge bg-secondary" th:if="${book.category}" th:text="${book.category.name}">Thể loại</span></p>
+                <p><strong>Ngày xuất bản:</strong> <span th:if="${book.publishDate}" th:text="${#temporals.format(book.publishDate, 'dd-MM-yyyy')}"></span></p>
+                <p><strong>Số lượng còn lại:</strong> <span th:text="${book.quantity}"></span></p>
+                <p><strong>Ngôn ngữ:</strong> <span th:if="${book.language}" th:text="${book.language}"></span></p>
+                
+                <h4>Mô tả</h4>
+                <p th:text="${book.description}">Nội dung mô tả chi tiết của cuốn sách...</p>
+
+                <div class="mt-4">
+                    <a th:href="@{'/books/view/' + ${book.id}}" class="btn btn-primary" th:if="${book.pdfPath != null and not #strings.isEmpty(book.pdfPath)}">
+                        <i class="bi bi-book"></i> Đọc sách
+                    </a>
+                    
+                    <div sec:authorize="hasRole('ADMIN')" class="d-inline-block">
+                         <a th:href="@{'/books/edit/' + ${book.id}}" class="btn btn-warning">
+                            <i class="bi bi-pencil-square"></i> Sửa
+                        </a>
+                        <a th:href="@{'/books/delete/' + ${book.id}}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa sách này không?');">
+                            <i class="bi bi-trash"></i> Xóa
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<hr class="my-5">
+
+<div class="row">
+    <div class="col-md-7">
+        <h3 class="mb-4">Đánh giá từ độc giả</h3>
+        <div th:if="${reviews.isEmpty()}">
+            <p class="text-muted">Chưa có đánh giá nào cho cuốn sách này.</p>
+        </div>
+        <div th:unless="${reviews.isEmpty()}" class="list-group">
+            <div th:each="review : ${reviews}" class="list-group-item list-group-item-action flex-column align-items-start mb-3 border rounded">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1" th:if="${review.user}" th:text="${review.user.username}">Tên người dùng</h5>
+                    <small th:if="${review.createdAt}" th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy')}"></small>
+                </div>
+                <p class="mb-1">
+                    <span th:each="i : ${#numbers.sequence(1, 5)}" 
+                          class="bi" 
+                          th:classappend="${i <= review.rating} ? 'bi-star-fill text-warning' : 'bi-star'"></span>
+                </p>
+                <p class="mb-1" th:text="${review.comment}">Nội dung bình luận.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div sec:authorize="isAuthenticated()">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Viết đánh giá của bạn</h4>
+                    <form th:action="@{/reviews/add}" th:object="${newReview}" method="post">
+                        <input type="hidden" name="bookId" th:value="${book.id}" />
+                        <div class="mb-3">
+                            <label class="form-label">Xếp hạng</label>
+                            <div>
+                                <select class="form-select" th:field="*{rating}" required>
+                                    <option value="5">5 sao ★★★★★</option>
+                                    <option value="4">4 sao ★★★★☆</option>
+                                    <option value="3">3 sao ★★★☆☆</option>
+                                    <option value="2">2 sao ★★☆☆☆</option>
+                                    <option value="1">1 sao ★☆☆☆☆</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Bình luận</label>
+                            <textarea id="comment" th:field="*{comment}" rows="4" class="form-control" placeholder="Chia sẻ cảm nhận của bạn..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Gửi đánh giá</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div sec:authorize="isAnonymous()">
+            <div class="alert alert-info">
+                Vui lòng <a th:href="@{/login}" class="alert-link">đăng nhập</a> để viết đánh giá.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout/footer :: footer}"></div>
 </body>
 </html>
