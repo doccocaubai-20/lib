@@ -8,33 +8,50 @@
     <span th:text="${successMessage}"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
-<div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
-    <span th:text="${errorMessage}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
 
 <div class="card shadow-lg border-0">
     <div class="card-body p-5">
-        <div class="row">
+        <div class="row g-5">
+            
             <div class="col-md-4 text-center">
-                <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? book.image : 'https://via.placeholder.com/300x400.png?text=Book+Cover'}"
-                     class="img-fluid rounded shadow-sm book-detail-img" alt="Book Cover">
+                <a href="#" data-bs-toggle="modal" data-bs-target="#imageModal">
+                    <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? '/uploads/' + book.image : 'https://via.placeholder.com/300x400.png?text=Book+Cover'}"
+                         class="img-fluid rounded shadow-sm book-detail-img" style="cursor: pointer;" alt="Book Cover">
+                </a>
             </div>
-            <div class="col-md-8">
-                <h1 th:text="${book.title}" class="display-5">Tên sách</h1>
-                <p class="lead text-muted">bởi <span th:text="${book.author?.name ?: 'Chưa xác định'}">Tên tác giả</span></p>
-                <hr>
 
-                <p><strong>Thể loại:</strong> <span class="badge bg-secondary" th:if="${book.category}" th:text="${book.category.name}">Thể loại</span></p>
-                <p><strong>Ngày xuất bản:</strong> <span th:if="${book.publishDate}" th:text="${#temporals.format(book.publishDate, 'dd-MM-yyyy')}"></span></p>
-                <p><strong>Số lượng còn lại:</strong> <span th:text="${book.quantity}"></span></p>
-                <p><strong>Ngôn ngữ:</strong> <span th:if="${book.language}" th:text="${book.language}"></span></p>
+            <div class="col-md-8">
+                <h1 class="display-5 fw-bold" th:text="${book.title}">Tên sách</h1>
+                <p class="lead text-muted mb-4">bởi <span th:text="${book.author?.name ?: 'Chưa xác định'}">Tên tác giả</span></p>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Thể loại:</strong></div>
+                    <div class="col-sm-9"><span class="badge bg-secondary fs-6" th:if="${book.category}" th:text="${book.category.name}"></span></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Ngày xuất bản:</strong></div>
+                    <div class="col-sm-9"><span th:if="${book.publishDate}" th:text="${#temporals.format(book.publishDate, 'dd-MM-yyyy')}"></span></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Số trang:</strong></div>
+                    <div class="col-sm-9"><span th:if="${book.pageCount}" th:text="${book.pageCount}"></span></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Số lượng còn lại:</strong></div>
+                    <div class="col-sm-9"><span th:text="${book.quantity}"></span></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-3"><strong>Ngôn ngữ:</strong></div>
+                    <div class="col-sm-9"><span th:if="${book.language}" th:text="${book.language}"></span></div>
+                </div>
                 
+                <hr class="my-4">
+
                 <h4>Mô tả</h4>
                 <p th:text="${book.description}">Nội dung mô tả chi tiết của cuốn sách...</p>
 
                 <div class="mt-4">
-                    <a th:href="@{'/books/view/' + ${book.id}}" class="btn btn-primary" th:if="${book.pdfPath != null and not #strings.isEmpty(book.pdfPath)}">
+                    <a th:href="@{'/books/view/' + ${book.id}}" class="btn btn-primary btn-lg" th:if="${book.pdfPath != null and not #strings.isEmpty(book.pdfPath)}">
                         <i class="bi bi-book"></i> Đọc sách
                     </a>
                     
@@ -48,8 +65,8 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+            
+        </div> </div>
 </div>
 
 <hr class="my-5">
@@ -85,14 +102,12 @@
                         <input type="hidden" name="bookId" th:value="${book.id}" />
                         <div class="mb-3">
                             <label class="form-label">Xếp hạng</label>
-                            <div>
-                                <select class="form-select" th:field="*{rating}" required>
-                                    <option value="5">5 sao ★★★★★</option>
-                                    <option value="4">4 sao ★★★★☆</option>
-                                    <option value="3">3 sao ★★★☆☆</option>
-                                    <option value="2">2 sao ★★☆☆☆</option>
-                                    <option value="1">1 sao ★☆☆☆☆</option>
-                                </select>
+                            <div class="star-rating">
+                                <input type="radio" id="5-stars" th:field="*{rating}" value="5" required/><label for="5-stars" class="bi bi-star-fill"></label>
+                                <input type="radio" id="4-stars" th:field="*{rating}" value="4" /><label for="4-stars" class="bi bi-star-fill"></label>
+                                <input type="radio" id="3-stars" th:field="*{rating}" value="3" /><label for="3-stars" class="bi bi-star-fill"></label>
+                                <input type="radio" id="2-stars" th:field="*{rating}" value="2" /><label for="2-stars" class="bi bi-star-fill"></label>
+                                <input type="radio" id="1-star"  th:field="*{rating}" value="1" /><label for="1-star" class="bi bi-star-fill"></label>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -112,6 +127,21 @@
     </div>
 </div>
 
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel" th:text="${book.title}">Tên sách</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? '/uploads/' + book.image : 'https://via.placeholder.com/300x400.png?text=Book+Cover'}"
+             class="img-fluid" alt="Enlarged Book Cover">
+      </div>
+    </div>
+  </div>
+</div>
+    
 <div th:replace="~{layout/footer :: footer}"></div>
 </body>
 </html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${book.title} + ' — Đọc sách'"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body, html { height: 100%; margin: 0; padding: 0; background-color: #212529; color: #dee2e6; overflow: hidden; }
+        .viewer-container { display: flex; flex-direction: column; height: 100vh; }
+        .viewer-header {
+            background-color: #343a40; display: flex; align-items: center; padding: 0 1.5rem; 
+            flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.4); z-index: 10; height: 60px;
+        }
+        .viewer-main { flex-grow: 1; overflow: auto; text-align: center; background-color: #495057; }
+        #pdf-canvas { margin: 2rem 0; box-shadow: 0 0 15px rgba(0,0,0,0.75); }
+        .viewer-footer {
+            background-color: #343a40; display: flex; align-items: center; justify-content: center; 
+            flex-shrink: 0; box-shadow: 0 -2px 5px rgba(0,0,0,0.4); z-index: 10; height: 50px;
+        }
+        .btn-reader { background-color: #495057; color: #fff; border: 1px solid #6c757d; }
+        .btn-reader:hover { background-color: #6c757d; }
+        /* Style cho ô nhập số trang */
+        #page-input {
+            width: 70px;
+            text-align: center;
+            background-color: #212529;
+            color: #fff;
+            border: 1px solid #6c757d;
+            border-radius: 0.375rem;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="viewer-container">
+    <header class="viewer-header">
+        <a th:href="@{'/books/detail/' + ${book.id}}" class="btn btn-reader btn-sm me-4">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <h5 class="mb-0 text-truncate" th:text="${book.title}">Tên sách</h5>
+    </header>
+
+    <main class="viewer-main">
+        <canvas id="pdf-canvas"></canvas>
+    </main>
+
+    <footer class="viewer-footer">
+        <div class="page-controls d-flex align-items-center">
+            <button id="prev-page" class="btn btn-reader"><i class="bi bi-chevron-left"></i></button>
+            <div class="mx-3">
+                <span>Trang </span>
+                <input type="number" id="page-input" min="1">
+                <span> / <span id="page-count"></span></span>
+            </div>
+            <button id="next-page" class="btn btn-reader"><i class="bi bi-chevron-right"></i></button>
+        </div>
+    </footer>
+</div>
+
+<script th:src="@{/lib/build/pdf.mjs}" type="module"></script>
+<script th:inline="javascript" type="module">
+    /*<![CDATA[*/
+    const pdfUrl = /*[[@{'/uploads/' + ${book.pdfPath}}]]*/ null;
+    /*]]>*/
+
+    const { pdfjsLib } = globalThis;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = /*[[@{/lib/build/pdf.worker.mjs}]]*/ '';
+
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
+    const pageNumSpan = document.getElementById('page-num'); // Vẫn giữ lại để cập nhật khi nhấn nút
+    const pageCountSpan = document.getElementById('page-count');
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
+    // Lấy ô input mới
+    const pageInput = document.getElementById('page-input');
+
+    let pdfDoc = null, pageNum = 1, pageIsRendering = false, pageNumIsPending = null;
+
+    const renderPage = num => {
+        pageIsRendering = true;
+        pdfDoc.getPage(num).then(page => {
+            const viewport = page.getViewport({ scale: 1.5 });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            const renderContext = { canvasContext: ctx, viewport: viewport };
+            page.render(renderContext).promise.then(() => {
+                pageIsRendering = false;
+                if (pageNumIsPending !== null) { renderPage(pageNumIsPending); pageNumIsPending = null; }
+            });
+            // Cập nhật giá trị cho cả ô input và span
+            pageInput.value = num;
+        });
+    };
+    
+    const queueRenderPage = num => {
+        if (pageIsRendering) {
+            pageNumIsPending = num;
+        } else {
+            renderPage(num);
+        }
+    };
+    
+    const showPrevPage = () => { if (pageNum <= 1) return; pageNum--; queueRenderPage(pageNum); };
+    const showNextPage = () => { if (pageNum >= pdfDoc.numPages) return; pageNum++; queueRenderPage(pageNum); };
+
+    // ==================== THÊM HÀM XỬ LÝ NHẢY TRANG ====================
+    const goToPage = () => {
+        const desiredPage = parseInt(pageInput.value, 10);
+        
+        // Kiểm tra xem số nhập vào có hợp lệ không
+        if (desiredPage >= 1 && desiredPage <= pdfDoc.numPages) {
+            pageNum = desiredPage;
+            queueRenderPage(pageNum);
+        } else {
+            // Nếu không hợp lệ, trả ô input về trang hiện tại
+            pageInput.value = pageNum;
+        }
+    };
+
+    if (pdfUrl) {
+        pdfjsLib.getDocument(pdfUrl).promise.then(doc => {
+            pdfDoc = doc;
+            pageCountSpan.textContent = doc.numPages;
+            pageInput.max = doc.numPages; // Đặt số trang tối đa cho ô input
+            renderPage(pageNum);
+        }).catch(err => {
+            console.error('Lỗi khi tải PDF:', err);
+        });
+    }
+    
+    prevButton.addEventListener('click', showPrevPage);
+    nextButton.addEventListener('click', showNextPage);
+    // Thêm sự kiện 'change' cho ô input (sẽ kích hoạt khi người dùng nhấn Enter hoặc click ra ngoài)
+    pageInput.addEventListener('change', goToPage);
+</script>
+
+</body>
+</html>

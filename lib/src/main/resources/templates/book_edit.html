@@ -11,7 +11,7 @@
                 <h4 class="mb-0">Chỉnh sửa thông tin sách</h4>
             </div>
             <div class="card-body p-4">
-                <form th:action="@{/books/update}" th:object="${book}" method="post">
+                <form th:action="@{/books/update}" th:object="${book}" method="post" enctype="multipart/form-data">
                     <input type="hidden" th:field="*{id}">
                     
                     <div class="mb-3">
@@ -24,14 +24,14 @@
                             <label for="author" class="form-label">Tác giả</label>
                             <select id="author" th:field="*{author.id}" class="form-select" required>
                                 <option value="">-- Chọn tác giả --</option>
-                                <option th:each="authorOpt : ${authors}" th:value="${authorOpt.id}" th:text="${authorOpt.name}" th:selected="${authorOpt.id == book.author.id}"></option>
+                                <option th:each="authorOpt : ${authors}" th:value="${authorOpt.id}" th:text="${authorOpt.name}" th:selected="${authorOpt.id == book.author?.id}"></option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="category" class="form-label">Thể loại</label>
                             <select id="category" th:field="*{category.id}" class="form-select" required>
                                 <option value="">-- Chọn thể loại --</option>
-                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id == book.category.id}"></option>
+                                <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id == book.category?.id}"></option>
                             </select>
                         </div>
                     </div>
@@ -41,7 +41,7 @@
                         <textarea id="description" th:field="*{description}" rows="4" class="form-control"></textarea>
                     </div>
 
-                     <div class="row">
+                    <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="publishDate" class="form-label">Ngày xuất bản</label>
                             <input type="date" id="publishDate" th:field="*{publishDate}" class="form-control">
@@ -57,17 +57,24 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="image" class="form-label">Link ảnh bìa</label>
-                        <input type="url" id="image" th:field="*{image}" class="form-control" placeholder="https://example.com/image.jpg">
+                        <label for="imageFile" class="form-label">Tải lên ảnh bìa mới (để trống nếu không muốn thay đổi)</label>
+                        <input type="file" id="imageFile" name="imageFile" class="form-control">
+                        <div class="mt-2" th:if="${book.image != null and not #strings.isEmpty(book.image)}">
+                            <small>Ảnh hiện tại:</small>
+                            <img th:src="@{'/uploads/' + ${book.image}}" alt="Current Cover" style="max-width: 100px; display: block;">
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="pdfPath" class="form-label">Link file PDF</label>
-                        <input type="url" id="pdfPath" th:field="*{pdfPath}" class="form-control" placeholder="https://example.com/book.pdf">
+                   <div class="mb-3">
+                        <label for="pdfFile" class="form-label">Tải lên file PDF mới (để trống nếu không muốn thay đổi)</label>
+                        <input type="file" id="pdfFile" name="pdfFile" class="form-control" accept=".pdf">
+                        <div class="mt-2" th:if="${book.pdfPath != null and not #strings.isEmpty(book.pdfPath)}">
+                            <small>File PDF hiện tại: <a th:href="@{'/uploads/' + ${book.pdfPath}}" th:text="${book.pdfPath}" target="_blank"></a></small>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a th:href="@{/books}" class="btn btn-secondary">Hủy</a>
+                        <a th:href="@{'/books/detail/' + ${book.id}}" class="btn btn-secondary">Hủy</a>
                         <button type="submit" class="btn btn-warning">Cập nhật</button>
                     </div>
                 </form>

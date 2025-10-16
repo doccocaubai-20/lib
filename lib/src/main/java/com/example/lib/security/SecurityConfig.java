@@ -21,7 +21,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/register", "/css/**", "/js/**").permitAll() // Cho phép truy cập register và các file tĩnh
+                .requestMatchers("/register", "/css/**", "/js/**","lib/**").permitAll() // Cho phép truy cập register và các file tĩnh
                 .requestMatchers("/books/add", "/books/edit/**", "/books/delete/**").hasRole("ADMIN") // Chỉ ADMIN
                 .anyRequest().authenticated() // Tất cả các request khác phải đăng nhập
             )

@@ -11,7 +11,7 @@
                 <h4 class="mb-0">Thêm sách mới</h4>
             </div>
             <div class="card-body p-4">
-                <form th:action="@{/books/add}" th:object="${book}" method="post">
+                <form th:action="@{/books/add}" th:object="${book}" method="post" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="title" class="form-label">Tên sách</label>
                         <input type="text" id="title" th:field="*{title}" class="form-control" required>
@@ -55,13 +55,13 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="image" class="form-label">Link ảnh bìa</label>
-                        <input type="url" id="image" th:field="*{image}" class="form-control" placeholder="https://example.com/image.jpg">
+                        <label for="imageFile" class="form-label">Ảnh bìa</label>
+                        <input type="file" id="imageFile" name="imageFile" class="form-control">
                     </div>
 
                     <div class="mb-3">
-                        <label for="pdfPath" class="form-label">Link file PDF</label>
-                        <input type="url" id="pdfPath" th:field="*{pdfPath}" class="form-control" placeholder="https://example.com/book.pdf">
+                        <label for="pdfFile" class="form-label">File PDF</label>
+                        <input type="file" id="pdfFile" name="pdfFile" class="form-control" accept=".pdf">
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">

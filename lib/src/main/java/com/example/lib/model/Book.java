@@ -25,6 +25,9 @@ public class Book {
 
     private LocalDate publishDate;
 
+    private Integer pageCount;
+
+
     @Column(nullable = false, columnDefinition = "INT UNSIGNED DEFAULT 0")
     private int quantity;
 
