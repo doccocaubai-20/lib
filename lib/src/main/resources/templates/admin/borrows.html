@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle='Quản lý Đơn mượn')}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+<h1 class="mb-4">Quản lý Đơn mượn</h1>
+<table class="table table-bordered table-hover">
+    <thead><tr><th>ID</th><th>Tên sách</th><th>Người mượn</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+    <tbody>
+        <tr th:each="b : ${allBorrows}">
+            <td th:text="${b.id}"></td>
+            <td th:text="${b.book.title}"></td>
+            <td th:text="${b.user.username}"></td>
+            <td><span class="badge"
+          th:classappend="${b.status == 'PENDING' ? 'bg-warning' : (b.status == 'APPROVED' ? 'bg-success' : 'bg-danger')}"
+          th:text="${b.status}"></span></td>
+<td>
+    <div th:if="${b.status == 'PENDING'}">
+        </div>
+</td>
+        </tr>
+    </tbody>
+</table>
+<div th:replace="~{layout/footer :: footer}"></div>
+</body>
+</html>

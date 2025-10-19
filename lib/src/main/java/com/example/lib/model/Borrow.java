@@ -22,4 +22,7 @@ public class Borrow {
 
     private LocalDate borrowDate;
     private LocalDate returnDate;
+
+    // Đổi từ Enum về String
+    private String status;
 }

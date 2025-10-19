@@ -2,6 +2,7 @@ package com.example.lib.controller;
 
 import com.example.lib.model.*;
 import com.example.lib.repository.*;
+import com.example.lib.service.BorrowService;
 import com.example.lib.service.UserService;
 import com.example.lib.storage.StorageService;
 
@@ -13,16 +14,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -37,11 +37,11 @@ public class WebController {
     private final ReviewRepository reviewRepo;
     private final UserService userService;
     private final StorageService storageService;
-
+    private final BorrowService borrowService;
     // Sử dụng constructor injection để Spring tự động cung cấp các bean cần thiết
     public WebController(BookRepository bookRepo, UserRepository userRepo,
                          AuthorRepository authorRepo, CategoryRepository categoryRepo,
-                         ReviewRepository reviewRepo, UserService userService,StorageService storageService) {
+                         ReviewRepository reviewRepo, UserService userService,StorageService storageService,BorrowService borrowService) {
         this.bookRepo = bookRepo;
         this.userRepo = userRepo;
         this.authorRepo = authorRepo;
@@ -49,6 +49,7 @@ public class WebController {
         this.reviewRepo = reviewRepo;
         this.userService = userService;
         this.storageService = storageService; 
+        this.borrowService = borrowService;
     }
 
     // ==================== Trang chính và các trang chung ====================
@@ -223,6 +224,37 @@ public String updateBook(@ModelAttribute Book bookFromForm,
         return "redirect:/books";
     }
 
+    @PostMapping("/books/borrow/{id}")
+public String handleBorrowRequest(@PathVariable("id") Long bookId,
+                                  Authentication authentication,
+                                  RedirectAttributes redirectAttributes) {
+    // ... lấy currentUser như cũ ...
+    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+    User currentUser = userRepo.findByUsername(userDetails.getUsername());
+
+    try {
+        // Gọi service để tạo yêu cầu
+        borrowService.createBorrowRequest(bookId, currentUser);
+        redirectAttributes.addFlashAttribute("successMessage", "Gửi yêu cầu mượn sách thành công! Vui lòng chờ Admin duyệt.");
+    } catch (Exception e) {
+        redirectAttributes.addFlashAttribute("errorMessage", "Yêu cầu thất bại: " + e.getMessage());
+    }
+    return "redirect:/books/detail/" + bookId;
+}
+    // == THÊM PHƯƠNG THỨC MỚI ĐỂ HIỂN THỊ TRANG "SÁCH CỦA TÔI" ==
+    @GetMapping("/my-borrows")
+    public String showMyBorrows(Model model, Authentication authentication) {
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User currentUser = userRepo.findByUsername(userDetails.getUsername());
+
+        List<Borrow> myBorrows = borrowService.findBorrowsByUser(currentUser);
+        model.addAttribute("myBorrows", myBorrows);
+
+        return "my_borrows"; // Trỏ đến file my_borrows.html
+    }
+
+
+
     // ==================== Quản lý Đánh giá (Review Management) ====================
     
     @PostMapping("/reviews/add")
@@ -300,13 +332,42 @@ public String updateBook(@ModelAttribute Book bookFromForm,
 
     // Thêm một phương thức mới để xử lý tìm kiếm
     @GetMapping("/search")
-    public String searchBooks(@RequestParam("query") String query, Model model) {
-        // Đây là logic tìm kiếm đơn giản, bạn có thể cải tiến sau
-        List<Book> results = bookRepo.findByTitleContainingIgnoreCase(query);
-        model.addAttribute("books", results);
-        model.addAttribute("pageTitle", "Kết quả tìm kiếm cho: '" + query + "'");
-        model.addAttribute("isSearchResult", true);
-        model.addAttribute("query", query);
-        return "books"; // Tái sử dụng trang books.html để hiển thị kết quả
+public String searchBooks(@RequestParam("query") String query,
+                          @RequestParam(name = "page", required = false, defaultValue = "1") int page,
+                          @RequestParam(name = "size", required = false, defaultValue = "8") int size,
+                          Model model) {
+
+    // 1. Tìm kiếm tất cả sách khớp với query
+    List<Book> fullResults = bookRepo.findByTitleContainingIgnoreCase(query);
+
+    // 2. Tạo đối tượng Pageable
+    Pageable pageable = PageRequest.of(page - 1, size);
+
+    // 3. Chuyển List thành Page
+    int start = (int) pageable.getOffset();
+    int end = Math.min((start + pageable.getPageSize()), fullResults.size());
+
+    List<Book> pageContent = (start > fullResults.size()) 
+                             ? Collections.emptyList() 
+                             : fullResults.subList(start, end);
+
+    Page<Book> bookPage = new PageImpl<>(pageContent, pageable, fullResults.size());
+
+    // 4. Gửi dữ liệu ra view (tương tự listBooks)
+    model.addAttribute("bookPage", bookPage);
+    int totalPages = bookPage.getTotalPages();
+    if (totalPages > 0) {
+        List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages)
+                .boxed()
+                .collect(Collectors.toList());
+        model.addAttribute("pageNumbers", pageNumbers);
     }
+
+    // Thêm các thuộc tính để hiển thị tiêu đề tìm kiếm
+    model.addAttribute("isSearchResult", true);
+    model.addAttribute("query", query);
+    model.addAttribute("pageTitle", "Kết quả tìm kiếm cho: '" + query + "'");
+
+    return "books"; // Tái sử dụng template books.html
+}
 }

@@ -23,6 +23,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/register", "/css/**", "/js/**","lib/**").permitAll() // Cho phép truy cập register và các file tĩnh
                 .requestMatchers("/books/add", "/books/edit/**", "/books/delete/**").hasRole("ADMIN") // Chỉ ADMIN
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated() // Tất cả các request khác phải đăng nhập
             )
             .formLogin(form -> form

@@ -9,7 +9,7 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 </div>
 
-<div class="card shadow-lg border-0">
+<div class="card shadow-lg border-0 book-detail-card">
     <div class="card-body p-5">
         <div class="row g-5">
             
@@ -30,11 +30,11 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Ngày xuất bản:</strong></div>
-                    <div class="col-sm-9"><span th:if="${book.publishDate}" th:text="${#temporals.format(book.publishDate, 'dd-MM-yyyy')}"></span></div>
+                    <div class="col-sm-9"><span th:text="${book.publishDate != null ? #temporals.format(book.publishDate, 'dd-MM-yyyy') : 'Chưa cập nhật'}"></span></div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Số trang:</strong></div>
-                    <div class="col-sm-9"><span th:if="${book.pageCount}" th:text="${book.pageCount}"></span></div>
+                    <div class="col-sm-9"><span th:text="${book.pageCount != null ? book.pageCount : 'Chưa cập nhật'}"></span></div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Số lượng còn lại:</strong></div>
@@ -42,7 +42,7 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-sm-3"><strong>Ngôn ngữ:</strong></div>
-                    <div class="col-sm-9"><span th:if="${book.language}" th:text="${book.language}"></span></div>
+                    <div class="col-sm-9"><span th:text="${book.language != null and not #strings.isEmpty(book.language) ? book.language : 'Chưa cập nhật'}"></span></div>
                 </div>
                 
                 <hr class="my-4">
@@ -51,51 +51,42 @@
                 <p th:text="${book.description}">Nội dung mô tả chi tiết của cuốn sách...</p>
 
                 <div class="mt-4">
-                    <a th:href="@{'/books/view/' + ${book.id}}" class="btn btn-primary btn-lg" th:if="${book.pdfPath != null and not #strings.isEmpty(book.pdfPath)}">
-                        <i class="bi bi-book"></i> Đọc sách
-                    </a>
-                    
-                    <div sec:authorize="hasRole('ADMIN')" class="d-inline-block">
-                         <a th:href="@{'/books/edit/' + ${book.id}}" class="btn btn-warning">
-                            <i class="bi bi-pencil-square"></i> Sửa
-                        </a>
-                        <a th:href="@{'/books/delete/' + ${book.id}}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa sách này không?');">
-                            <i class="bi bi-trash"></i> Xóa
-                        </a>
-                    </div>
-                </div>
+    <a th:href="@{'/books/view/' + ${book.id}}" ... >Đọc sách</a>
+
+    <form th:action="@{'/books/borrow/' + ${book.id}}" method="post" class="d-inline-block"
+      sec:authorize="isAuthenticated()">
+    <button type="submit" class="btn btn-success btn-lg" th:if="${book.quantity > 0}">
+        <i class="bi bi-bag-plus"></i> Gửi yêu cầu mượn
+    </button>
+    </form>
+    
+    <div sec:authorize="hasRole('ADMIN')" class="d-inline-block">
+        </div>
+</div>
             </div>
             
         </div> </div>
 </div>
 
-<hr class="my-5">
-
+<hr class="my-5 border-secondary">
 <div class="row">
     <div class="col-md-7">
         <h3 class="mb-4">Đánh giá từ độc giả</h3>
-        <div th:if="${reviews.isEmpty()}">
-            <p class="text-muted">Chưa có đánh giá nào cho cuốn sách này.</p>
-        </div>
+        <div th:if="${reviews.isEmpty()}"><p class="text-muted">Chưa có đánh giá nào cho cuốn sách này.</p></div>
         <div th:unless="${reviews.isEmpty()}" class="list-group">
-            <div th:each="review : ${reviews}" class="list-group-item list-group-item-action flex-column align-items-start mb-3 border rounded">
+            <div th:each="review : ${reviews}" class="list-group-item list-group-item-action flex-column align-items-start mb-3 border-secondary" style="background-color: var(--card-bg-color); color: var(--text-color);">
                 <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1" th:if="${review.user}" th:text="${review.user.username}">Tên người dùng</h5>
-                    <small th:if="${review.createdAt}" th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy')}"></small>
+                    <h5 class="mb-1" th:if="${review.user}" th:text="${review.user.username}"></h5>
+                    <small class="text-muted" th:if="${review.createdAt}" th:text="${#temporals.format(review.createdAt, 'dd-MM-yyyy')}"></small>
                 </div>
-                <p class="mb-1">
-                    <span th:each="i : ${#numbers.sequence(1, 5)}" 
-                          class="bi" 
-                          th:classappend="${i <= review.rating} ? 'bi-star-fill text-warning' : 'bi-star'"></span>
-                </p>
-                <p class="mb-1" th:text="${review.comment}">Nội dung bình luận.</p>
+                <p class="mb-1"><span th:each="i : ${#numbers.sequence(1, 5)}" class="bi" th:classappend="${i <= review.rating} ? 'bi-star-fill text-warning' : 'bi-star'"></span></p>
+                <p class="mb-1" th:text="${review.comment}"></p>
             </div>
         </div>
     </div>
-    
     <div class="col-md-5">
         <div sec:authorize="isAuthenticated()">
-            <div class="card">
+            <div class="card" style="background-color: var(--card-bg-color); color: var(--text-color);">
                 <div class="card-body">
                     <h4 class="card-title">Viết đánh giá của bạn</h4>
                     <form th:action="@{/reviews/add}" th:object="${newReview}" method="post">
@@ -119,11 +110,6 @@
                 </div>
             </div>
         </div>
-        <div sec:authorize="isAnonymous()">
-            <div class="alert alert-info">
-                Vui lòng <a th:href="@{/login}" class="alert-link">đăng nhập</a> để viết đánh giá.
-            </div>
-        </div>
     </div>
 </div>
 
@@ -131,12 +117,11 @@
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="imageModalLabel" th:text="${book.title}">Tên sách</h5>
+        <h5 class="modal-title" id="imageModalLabel" th:text="${book.title}"></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? '/uploads/' + book.image : 'https://via.placeholder.com/300x400.png?text=Book+Cover'}"
-             class="img-fluid" alt="Enlarged Book Cover">
+        <img th:src="${book.image != null ? '/uploads/' + book.image : ''}" class="img-fluid">
       </div>
     </div>
   </div>
