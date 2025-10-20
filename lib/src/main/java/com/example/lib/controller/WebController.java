@@ -370,4 +370,22 @@ public String searchBooks(@RequestParam("query") String query,
 
     return "books"; // Tái sử dụng template books.html
 }
+
+    
+@GetMapping("/profile")
+public String userProfile(Model model, Authentication authentication) {
+    if (authentication == null || !authentication.isAuthenticated()) {
+        return "redirect:/login"; // Nếu chưa đăng nhập, chuyển về trang login
+    }
+
+    // Lấy username một cách an toàn
+    String username = authentication.getName();
+    User currentUser = userRepo.findByUsername(username);
+
+    // Gửi thông tin người dùng sang view
+    model.addAttribute("user", currentUser);
+
+    return "profile";
+}
+
 }

@@ -14,6 +14,61 @@ body {
     flex: 1;
 }
 
+/* ---------- Header ---------- */
+
+/* Đảm bảo dropdown ẩn mặc định */
+.nav-item.dropdown .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    min-width: 180px;
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 0.5rem;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+/* Khi hover vào vùng user (tên người dùng) thì hiển thị menu */
+.nav-item.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Tùy chỉnh giao diện dropdown-item */
+.dropdown-menu .dropdown-item {
+    padding: 8px 16px;
+    color: #333;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Thêm hiệu ứng cho icon người dùng */
+.nav-item.dropdown .nav-link {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-item.dropdown .nav-link:hover {
+    color: #0d6efd;
+}
+
+/* Tùy chỉnh dấu chia menu */
+.dropdown-divider {
+    margin: 4px 0;
+}
+
+/* Giảm khoảng cách của dropdown bên phải */
+.nav-item.dropdown {
+    position: relative;
+}
+
+
 /* ---------- Giao diện Sách (Grid) ---------- */
 .book-grid-item {
     background-color: #ffffff; /* Nền trắng */
@@ -84,7 +139,7 @@ body {
 
 .btn-read {
     background-color: #0d6efd; /* Nút màu xanh dương */
-    color: #fff;
+color: #fff;
     border: none;
     font-size: 0.85rem;
     padding: 0.25rem 0.75rem;
@@ -130,3 +185,17 @@ body {
 .star-rating:not(:hover) input[type="radio"]:checked ~ label,
 .star-rating:hover input[type="radio"] ~ label:hover,
 .star-rating:hover input[type="radio"] ~ label:hover ~ label { color: #ffc107; }
+
+.nav-item.dropdown:hover .dropdown-menu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* CSS cho menu dropdown có thể cuộn */
+.scrollable-menu {
+    height: auto;
+    max-height: 500px;  /* Bạn có thể thay đổi chiều cao tối đa này */
+    overflow-x: hidden;
+    overflow-y: auto;
+}
