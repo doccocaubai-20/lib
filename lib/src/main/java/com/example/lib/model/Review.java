@@ -21,7 +21,7 @@ public class Review {
     private Book book;
 
     @Column(nullable = false)
-    private int rating; // SQL CHECK constraint sẽ được Hibernate Validator xử lý ở tầng ứng dụng
+    private int rating;
 
     @Lob
     private String comment;

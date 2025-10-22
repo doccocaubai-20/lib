@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle='Quản lý Người dùng')}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+
+<div class.container mt-4>
+    <h2>Danh Sách Người Dùng</h2>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+        <tr>
+            <th>STT</th>
+            <th>Tên đăng nhập</th>
+            <th>Họ và Tên</th>
+            <th>Vai trò</th>
+            <th>Hành động</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="user, iterStat : ${users}">
+            <td th:text="${iterStat.count}"></td>
+            <td th:text="${user.username}"></td>
+            <td th:text="${user.fullName}"></td>
+            <td>
+                <span th:each="role : ${user.roles}" th:text="${role.name}" class="badge bg-info me-1"></span>
+            </td>
+            <td>
+                <a th:href="@{/admin/users/edit/{id}(id=${user.id})}" class="btn btn-warning btn-sm">Sửa</a>
+                <a th:href="@{/admin/users/delete/{id}(id=${user.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?')">Xóa</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

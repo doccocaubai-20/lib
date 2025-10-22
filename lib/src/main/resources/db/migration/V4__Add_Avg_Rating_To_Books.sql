@@ -1,0 +1,1 @@
+ALTER TABLE books ADD COLUMN average_rating DOUBLE DEFAULT 0.0;

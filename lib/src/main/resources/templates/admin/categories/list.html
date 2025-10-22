@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle='Quản lý Thể Loại')}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+<div class="container mt-4">
+    <h2>Danh Sách Thể loại</h2>
+    <a th:href="@{/admin/categories/add}" class="btn btn-primary mb-3">Thêm Thể Loại Mới</a>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>STT</th>
+                <th>Tên Thể Loại</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="category, iterStat : ${categories}">
+                <td th:text="${iterStat.count}"></td>
+                <td th:text="${category.name}"></td>
+                <td>
+                    <a th:href="@{/admin/categories/edit/{id}(id=${category.id})}" class="btn btn-warning btn-sm">Sửa</a>
+                    <a th:href="@{/admin/categories/delete/{id}(id=${category.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">Xóa</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

@@ -73,6 +73,24 @@
         </div>
     </div>
 </div>
+<div sec:authorize="isAuthenticated()" th:if="${recommendedBooks != null and !recommendedBooks.isEmpty()}" class="container mt-5">
+    <h2 class="text-center mb-4">Gợi ý dành riêng cho bạn</h2>
+    <div class="row">
+        <div class="col-md-3" th:each="book : ${recommendedBooks}">
+             <div class="card mb-4 shadow-sm">
+                 <a th:href="@{/books/detail/{id}(id=${book.id})}">
+                     <img th:src="@{/uploads/{imageName}(imageName=${book.image})}" class="card-img-top" alt="Book Cover" style="height: 300px; object-fit: cover;">
+                 </a>
+                 <div class="card-body">
+                     <h5 class="card-title text-truncate" th:text="${book.title}">Tên sách</h5>
+                     <p class="card-text text-muted" th:text="${book.author.name}">Tên tác giả</p>
+                 </div>
+             </div>
+        </div>
+    </div>
+</div>
+
+
 <div th:replace="~{layout/footer :: footer}"></div>
 </body>
 </html>

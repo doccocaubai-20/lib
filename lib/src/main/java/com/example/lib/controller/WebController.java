@@ -3,6 +3,7 @@ package com.example.lib.controller;
 import com.example.lib.model.*;
 import com.example.lib.repository.*;
 import com.example.lib.service.BorrowService;
+import com.example.lib.service.ReviewService;
 import com.example.lib.service.UserService;
 import com.example.lib.storage.StorageService;
 
@@ -38,10 +39,11 @@ public class WebController {
     private final UserService userService;
     private final StorageService storageService;
     private final BorrowService borrowService;
+    private final ReviewService reviewService;
     // Sử dụng constructor injection để Spring tự động cung cấp các bean cần thiết
     public WebController(BookRepository bookRepo, UserRepository userRepo,
                          AuthorRepository authorRepo, CategoryRepository categoryRepo,
-                         ReviewRepository reviewRepo, UserService userService,StorageService storageService,BorrowService borrowService) {
+                         ReviewRepository reviewRepo, UserService userService,StorageService storageService,BorrowService borrowService,ReviewService reviewService) {
         this.bookRepo = bookRepo;
         this.userRepo = userRepo;
         this.authorRepo = authorRepo;
@@ -50,6 +52,7 @@ public class WebController {
         this.userService = userService;
         this.storageService = storageService; 
         this.borrowService = borrowService;
+        this.reviewService = reviewService;
     }
 
     // ==================== Trang chính và các trang chung ====================
@@ -60,15 +63,22 @@ public class WebController {
     }
 
     @GetMapping("/index")
-    public String indexPage(Model model) {
+    public String indexPage(Model model, Authentication authentication) {
 
-        // Find 4 new Book
-        List<Book> latestBooks = bookRepo.findAll(PageRequest.of(0, 4,Sort.by("id").descending())).getContent();
+        List<Book> latestBooks = bookRepo.findAll(PageRequest.of(0, 4, Sort.by("id").descending())).getContent();
         model.addAttribute("latestBooks", latestBooks);
 
-        // Get 4 feature Book
         List<Book> featuredBooks = bookRepo.findAll(PageRequest.of(0, 4)).getContent();
         model.addAttribute("featuredBooks", featuredBooks);
+
+        // LOGIC GỢI Ý SÁCH (PHẦN THÊM MỚI)
+        if (authentication != null && authentication.isAuthenticated()) {
+            User currentUser = userRepo.findByUsername(authentication.getName());
+            // Gọi phương thức mới từ BorrowService
+            List<Book> recommendedBooks = borrowService.recommendBooksForUser(currentUser);
+            model.addAttribute("recommendedBooks", recommendedBooks);
+        }
+
         return "index";
     }
 
@@ -260,21 +270,16 @@ public String handleBorrowRequest(@PathVariable("id") Long bookId,
     @PostMapping("/reviews/add")
     public String addReview(@ModelAttribute("newReview") Review review,
                             @RequestParam("bookId") Long bookId,
-                            Authentication authentication, // Lấy thông tin người dùng đang đăng nhập
+                            Authentication authentication,
                             RedirectAttributes redirectAttributes) {
 
-        // Lấy username từ Principal
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String username = userDetails.getUsername();
-
-        // Tìm user và book từ database
-        User user = userRepo.findByUsername(username);
+        User user = userRepo.findByUsername(userDetails.getUsername());
         Book book = bookRepo.findById(bookId).orElse(null);
 
         if (user != null && book != null) {
-            review.setUser(user);
-            review.setBook(book);
-            reviewRepo.save(review);
+            // Gọi service mới để xử lý tất cả logic
+            reviewService.saveReview(review, user, book);
             redirectAttributes.addFlashAttribute("successMessage", "Cảm ơn bạn đã gửi đánh giá!");
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "Đã có lỗi xảy ra.");
@@ -372,20 +377,20 @@ public String searchBooks(@RequestParam("query") String query,
 }
 
     
-@GetMapping("/profile")
-public String userProfile(Model model, Authentication authentication) {
-    if (authentication == null || !authentication.isAuthenticated()) {
-        return "redirect:/login"; // Nếu chưa đăng nhập, chuyển về trang login
+    @GetMapping("/profile")
+    public String userProfile(Model model, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login"; // Nếu chưa đăng nhập, chuyển về trang login
+        }
+
+        // Lấy username một cách an toàn
+        String username = authentication.getName();
+        User currentUser = userRepo.findByUsername(username);
+
+        // Gửi thông tin người dùng sang view
+        model.addAttribute("user", currentUser);
+
+        return "profile";
     }
-
-    // Lấy username một cách an toàn
-    String username = authentication.getName();
-    User currentUser = userRepo.findByUsername(username);
-
-    // Gửi thông tin người dùng sang view
-    model.addAttribute("user", currentUser);
-
-    return "profile";
-}
 
 }

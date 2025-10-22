@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle='Quản lý Tác giả')}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+<div class="container mt-4">
+    <h2>Danh Sách Tác Giả</h2>
+    <a th:href="@{/admin/authors/add}" class="btn btn-primary mb-3">Thêm Tác Giả Mới</a>
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>STT</th>
+                <th>Tên Tác Giả</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="author, iterStat : ${authors}">
+                <td th:text="${iterStat.count}"></td>
+                <td th:text="${author.name}"></td>
+                <td>
+                    <a th:href="@{/admin/authors/edit/{id}(id=${author.id})}" class="btn btn-warning btn-sm">Sửa</a>
+                    <a th:href="@{/admin/authors/delete/{id}(id=${author.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')">Xóa</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

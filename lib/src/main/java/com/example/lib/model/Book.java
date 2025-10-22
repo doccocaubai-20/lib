@@ -40,4 +40,7 @@ public class Book {
 
     @Column(length = 10)
     private String language;
+
+    @Column(name = "average_rating", columnDefinition = "DOUBLE DEFAULT 0.0")
+    private Double averageRating = 0.0; 
 }

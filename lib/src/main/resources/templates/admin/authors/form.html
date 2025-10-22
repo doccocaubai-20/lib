@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle=${author.id == null ? 'Thêm Tác giả' : 'Sửa Tác giả'})}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+<div class="container mt-4">
+    <h2 th:text="${author.id == null ? 'Thêm Tác Giả Mới' : 'Chỉnh Sửa Tác Giả'}"></h2>
+    <form th:action="@{/admin/authors/save}" th:object="${author}" method="post">
+        <input type="hidden" th:field="*{id}" />
+        <div class="mb-3">
+            <label for="name" class="form-label">Tên Tác Giả</label>
+            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+        </div>
+        <button type="submit" class="btn btn-success">Lưu</button>
+        <a th:href="@{/admin/authors}" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

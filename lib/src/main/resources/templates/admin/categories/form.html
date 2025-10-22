@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle=${category.id == null ? 'Thêm Thể loại' : 'Sửa Thể loại'})}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+<div class="container mt-4">
+    <h2 th:text="${category.id == null ? 'Thêm Thể loại Mới' : 'Chỉnh Sửa Thể loại'}"></h2>
+    <form th:action="@{/admin/categories/save}" th:object="${category}" method="post">
+        <input type="hidden" th:field="*{id}" />
+        <div class="mb-3">
+            <label for="name" class="form-label">Tên Thể Loại</label>
+            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+        </div>
+        <button type="submit" class="btn btn-success">Lưu</button>
+        <a th:href="@{/admin/categories}" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>
