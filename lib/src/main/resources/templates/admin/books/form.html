@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle=${book.id == null ? 'Thêm Sách' : 'Sửa Sách'})}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+
+<div class="container mt-4">
+    <h2 th:text="${book.id == null ? 'Thêm Sách Mới' : 'Chỉnh Sửa Sách'}"></h2>
+    <hr>
+    <form th:action="@{/admin/books/save}" th:object="${book}" method="post" enctype="multipart/form-data">
+        <input type="hidden" th:field="*{id}" />
+        <input type="hidden" th:field="*{image}" />
+        <input type="hidden" th:field="*{pdfPath}" />
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Tên sách</label>
+                    <input type="text" class="form-control" id="title" th:field="*{title}" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="author" class="form-label">Tác giả</label>
+                        <select id="author" class="form-select" th:field="*{author}" required>
+                            <option value="">-- Chọn tác giả --</option>
+                            <option th:each="author : ${authors}" th:value="${author.id}" th:text="${author.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="category" class="form-label">Thể loại</label>
+                        <select id="category" class="form-select" th:field="*{category}" required>
+                            <option value="">-- Chọn thể loại --</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Mô tả</label>
+                    <textarea class="form-control" id="description" rows="5" th:field="*{description}"></textarea>
+                </div>
+            </div>
+            <div class="col-md-4">
+                 <div class="mb-3">
+                    <label for="publishDate" class="form-label">Ngày xuất bản</label>
+                    <input type="date" class="form-control" id="publishDate" th:field="*{publishDate}">
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Số lượng</label>
+                    <input type="number" class="form-control" id="quantity" th:field="*{quantity}" required min="0">
+                </div>
+                <div class="mb-3">
+                    <label for="language" class="form-label">Ngôn ngữ</label>
+                    <input type="text" class="form-control" id="language" th:field="*{language}">
+                </div>
+                 <div class="mb-3">
+                    <label for="imageFile" class="form-label">Ảnh bìa</label>
+                    <input class="form-control" type="file" id="imageFile" name="imageFile" accept="image/*">
+                    <small th:if="*{image != null}">Ảnh hiện tại: [[*{image}]]</small>
+                </div>
+                <div class="mb-3">
+                    <label for="pdfFile" class="form-label">File PDF</label>
+                    <input class="form-control" type="file" id="pdfFile" name="pdfFile" accept="application/pdf">
+                     <small th:if="*{pdfPath != null}">File hiện tại: [[*{pdfPath}]]</small>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success">Lưu Sách</button>
+        <a th:href="@{/admin/books}" class="btn btn-secondary">Hủy</a>
+    </form>
+</div>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

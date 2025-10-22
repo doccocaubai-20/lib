@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -84,27 +84,43 @@ public class WebController {
 
     // ==================== Quản lý Sách (Book Management) ====================
 
+    // Thay thế hoàn toàn phương thức listBooks cũ
     @GetMapping("/books")
-public String listBooks(Model model,
-                        @RequestParam(name = "page", required = false, defaultValue = "1") int page,
-                        @RequestParam(name = "size", required = false, defaultValue = "8") int size) {
-    // Pageable đánh số trang từ 0, nên chúng ta trừ đi 1
-    Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
-    Page<Book> bookPage = bookRepo.findAll(pageable);
+    public String listBooks(Model model,
+                            @RequestParam(name = "page", defaultValue = "1") int page,
+                            @RequestParam(name = "size", defaultValue = "8") int size,
+                            @RequestParam(name = "keyword", required = false) String keyword,
+                            @RequestParam(name = "authorIds", required = false) List<Long> authorIds,
+                            @RequestParam(name = "categoryIds", required = false) List<Long> categoryIds,
+                            @RequestParam(name = "minRating", required = false) Double minRating) {
 
-    model.addAttribute("bookPage", bookPage);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+        
+        // Tạo specification từ các tham số lọc
+        Specification<Book> spec = BookSpecification.filterBy(keyword, authorIds, categoryIds, minRating);
 
-    // Tạo danh sách các số trang để hiển thị trên thanh phân trang
-    int totalPages = bookPage.getTotalPages();
-    if (totalPages > 0) {
-        List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages)
-                .boxed()
-                .collect(Collectors.toList());
-        model.addAttribute("pageNumbers", pageNumbers);
+        // Lấy dữ liệu đã lọc và phân trang
+        Page<Book> bookPage = bookRepo.findAll(spec, pageable);
+
+        model.addAttribute("bookPage", bookPage);
+
+        // Gửi lại các giá trị lọc để hiển thị trên form
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("authorIds", authorIds);
+        model.addAttribute("categoryIds", categoryIds);
+        model.addAttribute("minRating", minRating);
+
+        // ... code tạo pageNumbers như cũ ...
+        int totalPages = bookPage.getTotalPages();
+        if (totalPages > 0) {
+            List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages)
+                    .boxed()
+                    .collect(Collectors.toList());
+            model.addAttribute("pageNumbers", pageNumbers);
+        }
+
+        return "books";
     }
-    
-    return "books";
-}
 
     @GetMapping("/books/detail/{id}")
     public String viewBookDetail(@PathVariable Long id, Model model) {

@@ -72,8 +72,16 @@
 <div class="row">
     <div class="col-md-7">
         <h3 class="mb-4">Đánh giá từ độc giả</h3>
+        <strong>Điểm: </strong>
+        <span class="align-middle ms-1" th:text="${#numbers.formatDecimal(book.averageRating, 1, 1) + ' / 5.0'}"></span>
+        <div class="star-rating mb-3">
+    <i th:each="i : ${#numbers.sequence(1, 5)}" 
+       th:classappend="${i <= book.averageRating} ? 'bi-star-fill' : 'bi-star'" 
+       class="bi"></i>
+</div>
         <div th:if="${reviews.isEmpty()}"><p class="text-muted">Chưa có đánh giá nào cho cuốn sách này.</p></div>
         <div th:unless="${reviews.isEmpty()}" class="list-group">
+            
             <div th:each="review : ${reviews}" class="list-group-item list-group-item-action flex-column align-items-start mb-3 border-secondary" style="background-color: var(--card-bg-color); color: var(--text-color);">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1" th:if="${review.user}" th:text="${review.user.username}"></h5>

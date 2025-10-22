@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle='Quản lý Sách')}"></head>
+<body>
+<header th:replace="~{layout/header :: header}"></header>
+
+<div class="container mt-4">
+    <h2 class="mb-3">Danh Sách Sách</h2>
+    <a th:href="@{/admin/books/add}" class="btn btn-primary mb-3">
+        <i class="bi bi-plus-circle"></i> Thêm sách mới
+    </a>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>STT</th>
+                        <th>Bìa sách</th>
+                        <th>Tên sách</th>
+                        <th>Tác giả</th>
+                        <th>Thể loại</th>
+                        <th>Số lượng</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="book, iterStat : ${books}">
+                        <td th:text="${iterStat.count}"></td>
+                        <td><img th:src="@{'/uploads/' + ${book.image}}" alt="Cover" width="50"></td>
+                        <td th:text="${book.title}"></td>
+                        <td th:text="${book.author?.name}"></td>
+                        <td th:text="${book.category?.name}"></td>
+                        <td th:text="${book.quantity}"></td>
+                        <td>
+                            <a th:href="@{/admin/books/edit/{id}(id=${book.id})}" class="btn btn-warning btn-sm">Sửa</a>
+                            <a th:href="@{/admin/books/delete/{id}(id=${book.id})}" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa cuốn sách này?')">Xóa</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
+</body>
+</html>

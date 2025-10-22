@@ -1,77 +1,102 @@
 package com.example.lib.storage;
 
-import org.apache.pdfbox.pdmodel.PDDocument; // Thêm import này
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.annotation.PostConstruct;
 
 @Service
 public class StorageService {
 
-    private final Path rootLocation = Paths.get("uploads");
+    private final Path rootLocation;
 
-    public StorageService() {
+    // Sử dụng StorageProperties để lấy đường dẫn từ application.properties
+    public StorageService(StorageProperties properties) {
+        this.rootLocation = Paths.get(properties.getLocation());
+    }
+
+    // @PostConstruct đảm bảo thư mục được tạo khi service khởi động
+    @PostConstruct
+    public void init() {
         try {
             Files.createDirectories(rootLocation);
+            System.out.println("Storage location created: " + rootLocation.toAbsolutePath());
         } catch (IOException e) {
-            throw new RuntimeException("Không thể khởi tạo thư mục lưu trữ", e);
+            throw new RuntimeException("Could not initialize storage location", e);
         }
     }
 
+    // Phương thức Store được cải tiến
     public String store(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            return null;
-        }
-
+        String filename = StringUtils.cleanPath(file.getOriginalFilename());
         try {
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            if (file.isEmpty() || filename.contains("..")) {
+                throw new RuntimeException("Failed to store file with invalid path: " + filename);
             }
-            String generatedFilename = UUID.randomUUID().toString() + fileExtension;
+            
+            // Tạo tên file duy nhất để tránh trùng lặp
+            String extension = StringUtils.getFilenameExtension(filename);
+            String storedFilename = UUID.randomUUID().toString() + "." + extension;
 
-            Path destinationFile = this.rootLocation.resolve(Paths.get(generatedFilename))
-                    .normalize().toAbsolutePath();
-
+            Path destinationFile = this.rootLocation.resolve(storedFilename).normalize().toAbsolutePath();
+            
             try (InputStream inputStream = file.getInputStream()) {
                 Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
             }
-            
-            return generatedFilename;
+            return storedFilename;
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi lưu file.", e);
+            throw new RuntimeException("Failed to store file " + filename, e);
         }
     }
 
-    // ================== PHƯƠNG THỨC BẠN BỊ THIẾU ==================
-    /**
-     * Đọc file MultipartFile và trả về số trang của file PDF.
-     * @param pdfFile File PDF được tải lên
-     * @return Số trang, hoặc 0 nếu có lỗi hoặc file không hợp lệ.
-     */
-    public int getPdfPageCount(MultipartFile pdfFile) {
-        if (pdfFile == null || pdfFile.isEmpty()) {
+    // Phương thức getPdfPageCount giữ nguyên
+    public int getPdfPageCount(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream();
+             PDDocument document = PDDocument.load(inputStream)) {
+            return document.getNumberOfPages();
+        } catch (IOException e) {
+            e.printStackTrace();
             return 0;
         }
+    }
 
-        try (InputStream inputStream = pdfFile.getInputStream()) {
-            // Dùng PDDocument của thư viện PDFBox để tải file
-            PDDocument document = PDDocument.load(inputStream);
-            int pageCount = document.getNumberOfPages();
-            document.close();
-            return pageCount;
+    // PHƯƠNG THỨC MỚI: Tải file dưới dạng Resource
+    public Resource loadAsResource(String filename) {
+        try {
+            Path file = rootLocation.resolve(filename);
+            Resource resource = new UrlResource(file.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("Could not read file: " + filename);
+            }
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Could not read file: " + filename, e);
+        }
+    }
+
+    // PHƯƠNG THỨC MỚI: Xóa file
+    public void delete(String filename) {
+        // Kiểm tra xem filename có hợp lệ không
+        if (filename == null || filename.isBlank()) {
+            return;
+        }
+        try {
+            Path file = rootLocation.resolve(filename);
+            Files.deleteIfExists(file);
         } catch (IOException e) {
-            // In ra lỗi để dễ debug, nhưng không làm crash ứng dụng
-            System.err.println("Không thể đọc file PDF để đếm trang: " + e.getMessage());
-            return 0; // Trả về 0 nếu không đọc được
+            System.err.println("Failed to delete file: " + filename + " " + e.getMessage());
         }
     }
 }

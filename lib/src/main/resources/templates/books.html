@@ -1,74 +1,129 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="vi">
-<head th:replace="~{layout/header :: head(pageTitle=${pageTitle != null ? pageTitle : 'Danh sách sách'})}"></head>
-<body >
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: head(pageTitle='Danh Sách Sách')}"></head>
+<body>
 <header th:replace="~{layout/header :: header}"></header>
 
-<div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
-    <span th:text="${successMessage}"></span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-3 col-lg-2">
+            <!-- Nút toggle bộ lọc -->
+            <button class="btn btn-outline-primary" id="filterToggle">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div th:if="${isSearchResult}">
-        <h1 class="mb-0 text-white">Kết quả cho: "<span class="text-warning" th:text="${query}"></span>"</h1>
-    </div>
-    <div th:unless="${isSearchResult}">
-        <h1 class="mb-0 text-white">Khám phá Thư viện</h1>
-    </div>
-</div>
-
-<div class="book-grid-container">
-    <div th:if="${bookPage.isEmpty()}">
-        <div class="alert alert-warning">Không tìm thấy cuốn sách nào.</div>
-    </div>
-    
-    <div th:unless="${bookPage.isEmpty()}" class="row g-4">
-        <div class="col-lg-6" th:each="book : ${bookPage.content}">
-            <article class="book-grid-item">
-                <a th:href="@{'/books/detail/' + ${book.id}}">
-                     <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? '/uploads/' + book.image : 'https://via.placeholder.com/90x120.png?text=Cover'}"
-                         class="book-grid-item__cover" alt="Book Cover">
-                </a>
-                <div class="book-grid-item__info">
-                    <div>
-                        <a th:href="@{'/books/detail/' + ${book.id}}" class="book-grid-item__title" th:text="${book.title}">Tên sách</a>
-                        <p class="book-grid-item__description" th:text="${book.description}">Mô tả ngắn...</p>
-                    </div>
-                    <div class="book-grid-item__actions">
-                        <div class="book-grid-item__meta">
-                            <span th:if="${book.author}"><i class="bi bi-person"></i> <span th:text="${book.author.name}"></span></span>
-                            <br>
-                            <span th:if="${book.category}"><i class="bi bi-tag"></i> <span th:text="${book.category.name}"></span></span>
-                        </div>
-                        <div>
-                             <a th:href="@{'/books/detail/' + ${book.id}}" class="btn btn-read">Đọc thử</a>
-                            <div class="text-muted text-end mt-1" style="font-size: 0.8rem;">
-                                <span th:if="${book.pageCount}" th:text="${book.pageCount} + ' trang'"></span>
+        <!-- Panel bộ lọc -->
+        <div id="filterPanel" class="filter-panel">
+            <div class="container-fluid mt-4">
+                <div class="row">
+                    <div class="col-12">
+                        <h4><i class="bi bi-filter"></i> Bộ Lọc Nâng Cao</h4>
+                        <hr>
+                        <form th:action="@{/books}" method="get">
+                            <!-- Các bộ lọc như trong mã ban đầu -->
+                            <div class="mb-3">
+                                <label for="keyword" class="form-label">Tên sách</label>
+                                <input type="text" class="form-control" id="keyword" name="keyword" th:value="${keyword}" placeholder="Nhập tên sách...">
                             </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tác giả</label>
+                                <div class="border p-2 rounded" style="max-height: 150px; overflow-y: auto;">
+                                    <div th:each="author : ${allAuthors}" class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="authorIds" th:value="${author.id}" th:id="'author'+${author.id}" 
+                                               th:checked="${authorIds != null and authorIds.contains(author.id)}">
+                                        <label class="form-check-label" th:for="'author'+${author.id}" th:text="${author.name}"></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Thể loại</label>
+                                <div class="border p-2 rounded" style="max-height: 150px; overflow-y: auto;">
+                                    <div th:each="category : ${allCategories}" class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="categoryIds" th:value="${category.id}" th:id="'cat'+${category.id}"
+                                               th:checked="${categoryIds != null and categoryIds.contains(category.id)}">
+                                        <label class="form-check-label" th:for="'cat'+${category.id}" th:text="${category.name}"></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="minRating" class="form-label">Đánh giá tối thiểu</label>
+                                <select class="form-select" id="minRating" name="minRating">
+                                    <option value="">Tất cả</option>
+                                    <option value="4" th:selected="${minRating == 4.0}">Từ 4 sao</option>
+                                    <option value="3" th:selected="${minRating == 3.0}">Từ 3 sao</option>
+                                    <option value="2" th:selected="${minRating == 2.0}">Từ 2 sao</option>
+                                    <option value="1" th:selected="${minRating == 1.0}">Từ 1 sao</option>
+                                </select>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Áp dụng</button>
+                                <a th:href="@{/books}" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nội dung chính -->
+        <div class="col-md-9 col-lg-10">
+            <h2 th:text="${pageTitle != null ? pageTitle : 'Tất cả sách'}"></h2>
+            <div class="row">
+                <div th:if="${bookPage.isEmpty()}" class="col-12">
+                    <div class="alert alert-warning">Không tìm thấy sách nào phù hợp với tiêu chí của bạn.</div>
+                </div>
+                <div class="col-md-4" th:each="book : ${bookPage.content}">
+                    <div class="card mb-4 shadow-sm">
+                        <a th:href="@{/books/detail/{id}(id=${book.id})}">
+                            <img th:src="@{'/uploads/' + ${book.image}}" class="card-img-top card-img-uniform" alt="Book Cover" >
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate" th:text="${book.title}"></h5>
+                            <p class="card-text text-muted" th:text="${book.author.name}"></p>
+                            <p>
+                                <strong th:text="${#numbers.formatDecimal(book.averageRating, 1, 1)}">4.5</strong> ⭐
+                            </p>
                         </div>
                     </div>
                 </div>
-            </article>
+            </div>
+
+            <!-- Pagination -->
+            <nav th:if="${bookPage.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:each="pageNumber : ${pageNumbers}" th:classappend="${pageNumber == bookPage.number + 1} ? 'active' : ''">
+                        <a class="page-link" th:href="@{/books(page=${pageNumber}, keyword=${keyword}, authorIds=${authorIds}, categoryIds=${categoryIds}, minRating=${minRating})}" th:text="${pageNumber}"></a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
 
-<nav aria-label="Page navigation" class="mt-5" th:if="${bookPage.totalPages > 1}">
-    <ul class="pagination justify-content-center">
-        <li class="page-item" th:classappend="${bookPage.isFirst()} ? 'disabled' : ''">
-            <a class="page-link" th:href="@{/books(page=${bookPage.number}, size=${bookPage.size})}">Trước</a>
-        </li>
-        <li class="page-item" th:each="pageNumber : ${pageNumbers}" 
-            th:classappend="${pageNumber == bookPage.number + 1} ? 'active' : ''">
-            <a class="page-link" th:href="@{/books(page=${pageNumber}, size=${bookPage.size})}" th:text="${pageNumber}"></a>
-        </li>
-        <li class="page-item" th:classappend="${bookPage.isLast()} ? 'disabled' : ''">
-            <a class="page-link" th:href="@{/books(page=${bookPage.number + 2}, size=${bookPage.size})}">Sau</a>
-        </li>
-    </ul>
-</nav>
+<script>
+    // Lắng nghe sự kiện khi nhấn vào nút hamburger
+    document.getElementById('filterToggle').addEventListener('click', function() {
+        const filterPanel = document.getElementById('filterPanel');
+        filterPanel.classList.toggle('open'); // Thêm hoặc xóa lớp 'open' để điều khiển hiển thị
+    });
 
-<div th:replace="~{layout/footer :: footer}"></div>
+    // Đóng filter panel khi nhấn ngoài
+    document.addEventListener('click', function(event) {
+        const filterPanel = document.getElementById('filterPanel');
+        const filterToggle = document.getElementById('filterToggle');
+        
+        // Kiểm tra xem click ngoài filter panel và nút toggle có phải là mục đích không
+        if (!filterPanel.contains(event.target) && !filterToggle.contains(event.target)) {
+            filterPanel.classList.remove('open');
+        }
+    });
+</script>
+
+<footer th:replace="~{layout/footer :: footer}"></footer>
 </body>
 </html>

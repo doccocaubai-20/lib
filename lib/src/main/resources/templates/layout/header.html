@@ -44,7 +44,7 @@
                         </a>
                         <ul class="dropdown-menu scrollable-menu">
                             <li th:each="c : ${allCategories}">
-                                <a class="dropdown-item" href="#" th:text="${c.name}"></a>
+                                <a class="dropdown-item" th:href="@{/books(categoryIds=${c.id})}" th:text="${c.name}"></a>
                             </li>
                         </ul>
                     </li>
@@ -56,7 +56,7 @@
                         </a>
                         <ul class="dropdown-menu scrollable-menu">
                             <li th:each="a : ${allAuthors}">
-                                <a class="dropdown-item" href="#" th:text="${a.name}"></a>
+                                <a class="dropdown-item" th:href="@{/books(authorIds=${a.id})}" th:text="${a.name}"></a>
                             </li>
                         </ul>
                     </li>
