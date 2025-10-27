@@ -1,11 +1,15 @@
 package com.example.lib.controller;
 
-import com.example.lib.repository.BookRepository;
-import com.example.lib.repository.BorrowRepository;
-import com.example.lib.repository.UserRepository;
+import com.example.lib.model.Borrow;
+import com.example.lib.repository.BookDAO;
+import com.example.lib.repository.BorrowDAO;
+import com.example.lib.repository.UserDAO;
 import com.example.lib.service.BorrowService;
 
-import org.springframework.data.domain.Sort;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +22,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin") // Tất cả các URL trong controller này sẽ bắt đầu bằng /admin
 public class AdminController {
 
-    private final UserRepository userRepo;
-    private final BookRepository bookRepo;
+    private final UserDAO userRepo;
+    private final BookDAO bookRepo;
     private final BorrowService borrowService;
-    private final BorrowRepository borrowRepo;
-    public AdminController(UserRepository userRepo, BookRepository bookRepo,BorrowService borrowService,BorrowRepository borrowRepository) {
+    private final BorrowDAO borrowRepo;
+    public AdminController(UserDAO userRepo, BookDAO bookRepo,BorrowService borrowService,BorrowDAO borrowRepository) {
         this.userRepo = userRepo;
         this.bookRepo = bookRepo;
         this.borrowRepo = borrowRepository;
@@ -30,10 +34,15 @@ public class AdminController {
     }
 
     @GetMapping("/borrows")
-public String manageBorrows(Model model) {
-    model.addAttribute("allBorrows", borrowRepo.findAll(Sort.by("id").descending()));
-    return "admin/borrows";
-}
+    public String manageBorrows(Model model) {
+        // SỬA: Gọi findAll() rồi tự sắp xếp bằng Stream
+        List<Borrow> sortedBorrows = borrowRepo.findAll().stream()
+                .sorted(Comparator.comparing(Borrow::getId).reversed())
+                .collect(Collectors.toList());
+        
+        model.addAttribute("allBorrows", sortedBorrows);
+        return "admin/borrows";
+    }
 // Xử lý chấp nhận đơn
 @PostMapping("/borrows/approve/{id}")
 public String approveBorrow(@PathVariable Long id, RedirectAttributes redirectAttributes) {

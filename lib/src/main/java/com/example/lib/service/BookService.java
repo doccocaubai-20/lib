@@ -5,17 +5,13 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.lib.model.Book;
-import com.example.lib.model.Review;
-import com.example.lib.repository.BookRepository;
-import com.example.lib.repository.ReviewRepository;
+import com.example.lib.repository.BookDAO;
 
 @Service
 public class BookService {
-    private final BookRepository repo;
-    private final ReviewRepository reviewRepo;
-    public BookService(BookRepository repo, ReviewRepository reviewRepo) { 
+    private final BookDAO repo;
+    public BookService(BookDAO repo) { 
         this.repo = repo; 
-        this.reviewRepo = reviewRepo;
     }
     public List<Book> getAll() { return repo.findAll(); }
     public Book save(Book b) { return repo.save(b); }
@@ -27,28 +23,10 @@ public class BookService {
             b.setQuantity(newBook.getQuantity());
             b.setPublishDate(newBook.getPublishDate());
             b.setPdfPath(newBook.getPdfPath());
-            return repo.save(b);
+            return repo.update(b);
         }).orElse(null);
     }
     public void delete(Long id) { repo.deleteById(id); }
-    public void calculateAndSetAverageRating(Long bookId){
-        Book book = repo.findById(bookId).orElse(null);
-        if (book != null){
-            List<Review> reviews = reviewRepo.findByBookId(bookId);
-            if (reviews.isEmpty()){
-                book.setAverageRating(0.0);
-            }else{
-                double average = reviews.stream()
-                                        .mapToInt(Review::getRating)
-                                        .average()
-                                        .orElse(0.0);
-                double roundedAverage = Math.round(average * 10.0) / 10.0;
-                book.setAverageRating(roundedAverage);
-            }   
-            repo.save(book);
-        }
-    }
-
 
 }
 

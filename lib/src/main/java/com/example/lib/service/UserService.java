@@ -2,8 +2,8 @@ package com.example.lib.service;
 
 import com.example.lib.model.Role;
 import com.example.lib.model.User;
-import com.example.lib.repository.RoleRepository; // Tạo repository này
-import com.example.lib.repository.UserRepository;
+import com.example.lib.repository.RoleDAO;
+import com.example.lib.repository.UserDAO;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,45 +13,59 @@ import java.util.Set;
 
 @Service
 public class UserService {
-    private final UserRepository userRepo;
-    private final RoleRepository roleRepo;
+    
+    // Đổi tên biến cho nhất quán (Repo -> Dao)
+    private final UserDAO userDao;
+    private final RoleDAO roleDao;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepo, RoleRepository roleRepo, PasswordEncoder passwordEncoder) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
+    // Sửa hàm khởi tạo để nhận DAO
+    public UserService(UserDAO userDao, RoleDAO roleDao, PasswordEncoder passwordEncoder) {
+        this.userDao = userDao;
+        this.roleDao = roleDao;
         this.passwordEncoder = passwordEncoder;
     }
 
     public List<User> findAllUsers() {
-    return userRepo.findAllByRoles_NameNot("ROLE_ADMIN");
+        // Gọi hàm của DAO mới
+        return userDao.findAllByRoles_NameNot("ROLE_ADMIN");
     }
+    
     public Optional<User> findUserById(Long id) {
-    return userRepo.findById(id);
+        // Gọi hàm của DAO mới
+        return userDao.findById(id);
     }
 
     public void updateUser(User userForm) {
-    User existingUser = userRepo.findById(userForm.getId()).orElse(null);
-    if (existingUser != null) {
-        existingUser.setFullName(userForm.getFullName());
-        existingUser.setRoles(userForm.getRoles()); // Cập nhật roles
-        // Không cập nhật username và password ở đây để đảm bảo an toàn
-        userRepo.save(existingUser);
+        // Dùng userDao
+        User existingUser = userDao.findById(userForm.getId()).orElse(null);
+        if (existingUser != null) {
+            existingUser.setFullName(userForm.getFullName());
+            existingUser.setRoles(userForm.getRoles()); // Cập nhật roles
+            
+            // === SỬA LỖI 1 ===
+            // Dùng hàm update() của DAO, không dùng save()
+            userDao.update(existingUser);
+        }
     }
-    }
+    
     public void deleteUser(Long id) {
-          userRepo.deleteById(id);
+        // Gọi hàm của DAO mới (chúng ta đặt tên là delete)
+        userDao.delete(id);
     }
+    
     public User register(User user) {
         // Mã hóa mật khẩu
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Gán vai trò mặc định là USER
-        Role userRole = roleRepo.findByName("ROLE_USER");
+        // === SỬA LỖI 2 ===
+        // Xử lý Optional trả về từ RoleDao
+        Role userRole = roleDao.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy ROLE_USER trong CSDL."));
+        
         user.setRoles(Set.of(userRole));
 
-        return userRepo.save(user);
+        // Dùng hàm save() của DAO
+        return userDao.save(user);
     }
-
-    // Phương thức login sẽ do Spring Security xử lý, bạn có thể xóa nó đi.
 }

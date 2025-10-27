@@ -1,28 +1,32 @@
 package com.example.lib.controller;
 
 import com.example.lib.model.Book;
-import com.example.lib.repository.AuthorRepository;
-import com.example.lib.repository.BookRepository;
-import com.example.lib.repository.CategoryRepository;
+import com.example.lib.repository.AuthorDAO;
+import com.example.lib.repository.BookDAO;
+import com.example.lib.repository.CategoryDAO;
 import com.example.lib.storage.StorageService;
 
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Comparator; 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
-@RequestMapping("/admin/books") // Tiền tố chung cho tất cả các URL trong controller này
+@RequestMapping("/admin/books")
 public class BookAdminController {
 
-    private final BookRepository bookRepo;
-    private final AuthorRepository authorRepo;
-    private final CategoryRepository categoryRepo;
+    private final BookDAO bookRepo;
+    private final AuthorDAO authorRepo;
+    private final CategoryDAO categoryRepo;
     private final StorageService storageService;
 
-    public BookAdminController(BookRepository bookRepo, AuthorRepository authorRepo, CategoryRepository categoryRepo, StorageService storageService) {
+    // (Hàm khởi tạo của bạn đã đúng)
+    public BookAdminController(BookDAO bookRepo, AuthorDAO authorRepo, CategoryDAO categoryRepo, StorageService storageService) {
         this.bookRepo = bookRepo;
         this.authorRepo = authorRepo;
         this.categoryRepo = categoryRepo;
@@ -32,11 +36,17 @@ public class BookAdminController {
     // Hiển thị danh sách sách cho Admin
     @GetMapping
     public String listBooks(Model model) {
-        model.addAttribute("books", bookRepo.findAll(Sort.by("id").descending()));
+        // === SỬA LỖI 1 ===
+        // Bỏ 'Sort.by' và sắp xếp trong Java
+        List<Book> sortedBooks = bookRepo.findAll().stream()
+                .sorted(Comparator.comparing(Book::getId).reversed())
+                .collect(Collectors.toList());
+        
+        model.addAttribute("books", sortedBooks);
         return "admin/books/list";
     }
 
-    // Hiển thị form thêm sách
+    // (Hàm này đã đúng, giữ nguyên)
     @GetMapping("/add")
     public String showAddBookForm(Model model) {
         model.addAttribute("book", new Book());
@@ -45,7 +55,7 @@ public class BookAdminController {
         return "admin/books/form";
     }
 
-    // Hiển thị form sửa sách
+    // (Hàm này đã đúng, giữ nguyên)
     @GetMapping("/edit/{id}")
     public String showEditBookForm(@PathVariable Long id, Model model) {
         Book book = bookRepo.findById(id)
@@ -63,32 +73,36 @@ public class BookAdminController {
                            @RequestParam("pdfFile") MultipartFile pdfFile,
                            RedirectAttributes redirectAttributes) {
 
-        // Xử lý upload ảnh bìa MỚI (nếu có)
+        // (Logic xử lý file của bạn giữ nguyên)
         if (!imageFile.isEmpty()) {
-            storageService.delete(book.getImage()); // Xóa ảnh cũ nếu có
+            storageService.delete(book.getImage()); 
             String imageName = storageService.store(imageFile);
             book.setImage(imageName);
         }
-
-        // Xử lý upload file PDF MỚI (nếu có)
         if (!pdfFile.isEmpty()) {
-            storageService.delete(book.getPdfPath()); // Xóa file PDF cũ nếu có
+            storageService.delete(book.getPdfPath()); 
             String pdfName = storageService.store(pdfFile);
             book.setPdfPath(pdfName);
             int pageCount = storageService.getPdfPageCount(pdfFile);
             book.setPageCount(pageCount);
         }
 
-        bookRepo.save(book);
+        // === SỬA LỖI 2 ===
+        // Phân biệt giữa tạo mới (save) và cập nhật (update)
+        if (book.getId() == null) {
+            bookRepo.save(book); // Tạo mới
+        } else {
+            bookRepo.update(book); // Cập nhật
+        }
+        
         redirectAttributes.addFlashAttribute("successMessage", "Lưu sách thành công!");
         return "redirect:/admin/books";
     }
 
-    // Xử lý xóa sách
+    // (Hàm này đã đúng, giữ nguyên)
     @GetMapping("/delete/{id}")
     public String deleteBook(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            // Cân nhắc xóa cả file ảnh và pdf liên quan
             bookRepo.findById(id).ifPresent(book -> {
                 storageService.delete(book.getImage());
                 storageService.delete(book.getPdfPath());

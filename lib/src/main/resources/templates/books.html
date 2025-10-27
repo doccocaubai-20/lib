@@ -7,13 +7,11 @@
 <div class="container-fluid mt-4">
     <div class="row">
         <div class="col-md-3 col-lg-2">
-            <!-- Nút toggle bộ lọc -->
             <button class="btn btn-outline-primary" id="filterToggle">
                 <i class="bi bi-list"></i>
             </button>
         </div>
 
-        <!-- Panel bộ lọc -->
         <div id="filterPanel" class="filter-panel">
             <div class="container-fluid mt-4">
                 <div class="row">
@@ -21,7 +19,6 @@
                         <h4><i class="bi bi-filter"></i> Bộ Lọc Nâng Cao</h4>
                         <hr>
                         <form th:action="@{/books}" method="get">
-                            <!-- Các bộ lọc như trong mã ban đầu -->
                             <div class="mb-3">
                                 <label for="keyword" class="form-label">Tên sách</label>
                                 <input type="text" class="form-control" id="keyword" name="keyword" th:value="${keyword}" placeholder="Nhập tên sách...">
@@ -70,14 +67,15 @@
             </div>
         </div>
 
-        <!-- Nội dung chính -->
         <div class="col-md-9 col-lg-10">
             <h2 th:text="${pageTitle != null ? pageTitle : 'Tất cả sách'}"></h2>
             <div class="row">
-                <div th:if="${bookPage.isEmpty()}" class="col-12">
+                
+                <div th:if="${bookList == null or bookList.isEmpty()}" class="col-12">
                     <div class="alert alert-warning">Không tìm thấy sách nào phù hợp với tiêu chí của bạn.</div>
                 </div>
-                <div class="col-md-4" th:each="book : ${bookPage.content}">
+                
+                <div class="col-md-4" th:each="book : ${bookList}">
                     <div class="card mb-4 shadow-sm">
                         <a th:href="@{/books/detail/{id}(id=${book.id})}">
                             <img th:src="@{'/uploads/' + ${book.image}}" class="card-img-top card-img-uniform" alt="Book Cover" >
@@ -93,31 +91,19 @@
                 </div>
             </div>
 
-            <!-- Pagination -->
-            <nav th:if="${bookPage.totalPages > 1}">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item" th:each="pageNumber : ${pageNumbers}" th:classappend="${pageNumber == bookPage.number + 1} ? 'active' : ''">
-                        <a class="page-link" th:href="@{/books(page=${pageNumber}, keyword=${keyword}, authorIds=${authorIds}, categoryIds=${categoryIds}, minRating=${minRating})}" th:text="${pageNumber}"></a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+            </div>
     </div>
 </div>
 
 <script>
-    // Lắng nghe sự kiện khi nhấn vào nút hamburger
     document.getElementById('filterToggle').addEventListener('click', function() {
         const filterPanel = document.getElementById('filterPanel');
-        filterPanel.classList.toggle('open'); // Thêm hoặc xóa lớp 'open' để điều khiển hiển thị
+        filterPanel.classList.toggle('open');
     });
-
-    // Đóng filter panel khi nhấn ngoài
     document.addEventListener('click', function(event) {
         const filterPanel = document.getElementById('filterPanel');
         const filterToggle = document.getElementById('filterToggle');
         
-        // Kiểm tra xem click ngoài filter panel và nút toggle có phải là mục đích không
         if (!filterPanel.contains(event.target) && !filterToggle.contains(event.target)) {
             filterPanel.classList.remove('open');
         }

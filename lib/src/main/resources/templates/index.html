@@ -73,37 +73,6 @@
         </div>
     </div>
 </div>
-<div sec:authorize="isAuthenticated()" th:if="${recommendedBooks != null and !recommendedBooks.isEmpty()}" class="mb-5">
-    <h2 class="pb-2 border-bottom">Gợi ý dành riêng cho bạn</h2>
-    <div class="row g-4 mt-2">
-        <div class="col-lg-6" th:each="book : ${recommendedBooks}">
-        <article class="book-grid-item">
-                <a th:href="@{'/books/detail/' + ${book.id}}">
-                    <img th:src="${book.image != null and not #strings.isEmpty(book.image) ? '/uploads/' + book.image : 'https://via.placeholder.com/90x120.png?text=Cover'}" class="book-grid-item__cover card-img-uniform" alt="Book Cover">
-                </a>
-                <div class="book-grid-item__info">
-                    <div>
-                        <a th:href="@{'/books/detail/' + ${book.id}}" class="book-grid-item__title" th:text="${book.title}">Tên sách</a>
-                        <p class="book-grid-item__description" th:text="${book.description}"></p>
-                    </div>
-                    <div class="book-grid-item__actions">
-                        <div class="book-grid-item__meta">
-                            <span th:if="${book.author}"><i class="bi bi-person"></i> <span th:text="${book.author.name}"></span></span>
-                            <br>
-                            <span th:if="${book.category}"><i class="bi bi-tag"></i> <span th:text="${book.category.name}"></span></span>
-                        </div>
-                        <div>
-                            <a th:href="@{'/books/detail/' + ${book.id}}" class="btn btn-read">Đọc thử</a>
-                            <div class="text-muted text-end mt-1" style="font-size: 0.8rem;">
-                                <span th:if="${book.pageCount}" th:text="${book.pageCount} + ' trang'"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </article>
-    </div>
-</div>
-</div>
 <div th:replace="~{layout/footer :: footer}"></div>
 </body>
 </html>

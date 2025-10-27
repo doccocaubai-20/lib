@@ -1,25 +1,24 @@
 package com.example.lib.controller;
 
 import com.example.lib.model.User;
-import com.example.lib.repository.RoleRepository;
+import com.example.lib.repository.RoleDAO;
 import com.example.lib.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
 
 @Controller
 @RequestMapping("/admin/users")
 public class UserController {
 
     private final UserService userService;
-    private final RoleRepository roleRepository;
+    private final RoleDAO roleDAO;
 
-    public UserController(UserService userService, RoleRepository roleRepository) {
+    public UserController(UserService userService, RoleDAO roleDAO) {
         this.userService = userService;
-        this.roleRepository = roleRepository;
+        this.roleDAO = roleDAO;
     }
 
     // Hiển thị danh sách người dùng
@@ -35,7 +34,7 @@ public class UserController {
         User user = userService.findUserById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid user Id:" + id));
         model.addAttribute("user", user);
-        model.addAttribute("allRoles", roleRepository.findAll()); // Gửi tất cả các role sang view
+        model.addAttribute("allRoles", roleDAO.findAll()); // Gửi tất cả các role sang view
         return "admin/users/form";
     }
 

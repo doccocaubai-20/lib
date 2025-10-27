@@ -1,7 +1,8 @@
 package com.example.lib.controller;
 
 import com.example.lib.model.Author;
-import com.example.lib.repository.AuthorRepository;
+import com.example.lib.repository.AuthorDAO;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +12,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/authors") // Tất cả URL sẽ bắt đầu bằng /admin/authors
 public class AuthorController {
 
-    private final AuthorRepository authorRepo;
+    private final AuthorDAO authorRepo;
 
-    public AuthorController(AuthorRepository authorRepo) {
+    public AuthorController(AuthorDAO authorRepo) {
         this.authorRepo = authorRepo;
     }
 
@@ -43,11 +44,16 @@ public class AuthorController {
     // Xử lý lưu (thêm mới hoặc cập nhật)
     @PostMapping("/save")
     public String saveAuthor(@ModelAttribute("author") Author author, RedirectAttributes redirectAttributes) {
-        authorRepo.save(author);
+        
+        if (author.getId() == null) {
+            authorRepo.save(author); 
+        } else {
+            authorRepo.update(author);
+        }
+        
         redirectAttributes.addFlashAttribute("successMessage", "Lưu tác giả thành công!");
         return "redirect:/admin/authors";
     }
-
     // Xử lý xóa
     @GetMapping("/delete/{id}")
     public String deleteAuthor(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
