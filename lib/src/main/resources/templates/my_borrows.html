@@ -17,6 +17,7 @@
             <th>Tên sách</th>
             <th>Ngày mượn</th>
             <th>Hạn trả</th>
+            <th>Trạng thái</th>
         </tr>
     </thead>
     <tbody>
@@ -28,12 +29,6 @@
             <td th:text="${borrow.book.title}"></td>
             <td th:text="${#temporals.format(borrow.borrowDate, 'dd-MM-yyyy')}"></td>
             <td th:text="${#temporals.format(borrow.returnDate, 'dd-MM-yyyy')}"></td>
-        </tr>
-    </tbody>
-    <thead><tr><th>...</th><th>Hạn trả</th><th>Trạng thái</th></tr></thead>
-    <tbody>
-        <tr th:each="borrow : ${myBorrows}">
-            <td th:text="${borrow.returnDate != null ? #temporals.format(borrow.returnDate, 'dd-MM-yyyy') : ''}"></td>
             <td><span class="badge"
           th:classappend="${borrow.status == 'PENDING' ? 'bg-warning' : (borrow.status == 'APPROVED' ? 'bg-success' : 'bg-danger')}"
           th:text="${borrow.status}"></span></td>

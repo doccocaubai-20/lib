@@ -63,9 +63,6 @@
 
                     <!-- Admin links -->
                     <li class="nav-item" sec:authorize="hasRole('ADMIN')">
-<a class="nav-link" th:href="@{/books/add}">Thêm sách</a>
-                    </li>
-                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
                         <a class="nav-link" th:href="@{/admin/dashboard}">Quản trị</a>
                     </li>
                 </ul>

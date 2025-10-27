@@ -147,109 +147,6 @@ public String viewBookPdf(@PathVariable Long id, Model model) {
             .orElse("redirect:/books");
 }
 
-    // Hiển thị form thêm sách (chỉ cho ADMIN)
-    @GetMapping("/books/add")
-    public String showAddBookForm(Model model) {
-        model.addAttribute("book", new Book()); // Gửi một đối tượng Book rỗng
-        model.addAttribute("authors", authorRepo.findAll()); // Gửi danh sách tác giả
-        model.addAttribute("categories", categoryRepo.findAll()); // Gửi danh sách thể loại
-        return "addbook";
-    }
-
-    // Xử lý việc thêm sách mới
-
-    @PostMapping("/books/add")
-    public String addBook(@ModelAttribute Book book,
-                        @RequestParam("imageFile") MultipartFile imageFile,
-                        @RequestParam("pdfFile") MultipartFile pdfFile,
-                        RedirectAttributes redirectAttributes) {
-
-        if (!imageFile.isEmpty()) {
-            String imageName = storageService.store(imageFile);
-            book.setImage(imageName);
-        }
-        if (!pdfFile.isEmpty()) {
-            String pdfName = storageService.store(pdfFile);
-            book.setPdfPath(pdfName);
-            int pageCount = storageService.getPdfPageCount(pdfFile);
-            book.setPageCount(pageCount);
-        }
-        
-        bookRepo.save(book);
-        redirectAttributes.addFlashAttribute("successMessage", "Thêm sách thành công!");
-        return "redirect:/books";
-    }
-
-    // Hiển thị form sửa thông tin sách (chỉ cho ADMIN)
-    @GetMapping("/books/edit/{id}")
-    public String showEditBookForm(@PathVariable Long id, Model model) {
-        return bookRepo.findById(id).map(book -> {
-            model.addAttribute("book", book);
-            model.addAttribute("authors", authorRepo.findAll());
-            model.addAttribute("categories", categoryRepo.findAll());
-            return "book_edit";
-        }).orElse("redirect:/books");
-    }
-
-    // Xử lý việc cập nhật sách
-    // Thay thế hoàn toàn phương thức updateBook cũ bằng phương thức này
-
-@PostMapping("/books/update")
-public String updateBook(@ModelAttribute Book bookFromForm,
-                         @RequestParam("imageFile") MultipartFile imageFile,
-                         @RequestParam("pdfFile") MultipartFile pdfFile,
-                         RedirectAttributes redirectAttributes) {
-
-    // 1. Tìm cuốn sách gốc trong database
-    Book existingBook = bookRepo.findById(bookFromForm.getId()).orElse(null);
-    if (existingBook == null) {
-        redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy sách để cập nhật.");
-        return "redirect:/books";
-    }
-
-    // 2. Cập nhật các thông tin từ form (title, author, category...)
-    existingBook.setTitle(bookFromForm.getTitle());
-    existingBook.setAuthor(bookFromForm.getAuthor());
-    existingBook.setCategory(bookFromForm.getCategory());
-    existingBook.setPublishDate(bookFromForm.getPublishDate());
-    existingBook.setPageCount(bookFromForm.getPageCount());
-    existingBook.setQuantity(bookFromForm.getQuantity());
-    existingBook.setDescription(bookFromForm.getDescription());
-    existingBook.setLanguage(bookFromForm.getLanguage());
-    
-    // 3. Xử lý upload ảnh bìa MỚI (nếu có)
-    if (imageFile != null && !imageFile.isEmpty()) {
-        String imageName = storageService.store(imageFile);
-        existingBook.setImage(imageName);
-    }
-    // Nếu không có ảnh mới, chúng ta không làm gì cả, giữ nguyên ảnh cũ của `existingBook`
-
-    // 4. Xử lý upload file PDF MỚI (nếu có)
-    if (pdfFile != null && !pdfFile.isEmpty()) {
-        String pdfName = storageService.store(pdfFile);
-        existingBook.setPdfPath(pdfName);
-        int pageCount = storageService.getPdfPageCount(pdfFile);
-        existingBook.setPageCount(pageCount);
-    }
-    // Nếu không có file PDF mới, chúng ta không làm gì cả, giữ nguyên file PDF cũ
-
-    // 5. Lưu lại cuốn sách đã được cập nhật
-    bookRepo.save(existingBook);
-    redirectAttributes.addFlashAttribute("successMessage", "Cập nhật sách thành công!");
-    return "redirect:/books/detail/" + existingBook.getId();
-}
-    // Xóa sách (chỉ cho ADMIN)
-    @GetMapping("/books/delete/{id}")
-    public String deleteBook(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        if (bookRepo.existsById(id)) {
-            bookRepo.deleteById(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Xóa sách thành công!");
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy sách để xóa.");
-        }
-        return "redirect:/books";
-    }
-
     @PostMapping("/books/borrow/{id}")
 public String handleBorrowRequest(@PathVariable("id") Long bookId,
                                   Authentication authentication,
@@ -266,7 +163,8 @@ public String handleBorrowRequest(@PathVariable("id") Long bookId,
         redirectAttributes.addFlashAttribute("errorMessage", "Yêu cầu thất bại: " + e.getMessage());
     }
     return "redirect:/books/detail/" + bookId;
-}
+}    
+
     // == THÊM PHƯƠNG THỨC MỚI ĐỂ HIỂN THỊ TRANG "SÁCH CỦA TÔI" ==
     @GetMapping("/my-borrows")
     public String showMyBorrows(Model model, Authentication authentication) {
