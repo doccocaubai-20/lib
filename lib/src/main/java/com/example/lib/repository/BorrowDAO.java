@@ -51,41 +51,46 @@ public class BorrowDAO {
             // Tạo đối tượng User và Book "placeholder" chỉ chứa ID
             User user = new User();
             user.setId(rs.getLong("user_id"));
+            user.setUsername(rs.getString("user_username"));
             borrow.setUser(user);
 
             Book book = new Book();
             book.setId(rs.getLong("book_id"));
+            book.setTitle(rs.getString("book_title"));
+            book.setImage(rs.getString("book_image"));
             borrow.setBook(book);
 
             return borrow;
         }
     }
 
-    // === 1. PHƯƠNG THỨC findByUser ===
+    private final String BASE_SELECT_SQL_JOINED = "SELECT " +     
+                                                 "br.*, " +
+                                                 "b.title as book_title,b.image as book_image, " +
+                                                 "u.username as user_username " + 
+                                                 "FROM borrows br " +
+                                                 "JOIN books b ON br.book_id = b.id " +
+                                                 "JOIN users u  ON br.user_id = u.id ";
 
-    /**
-     * Tìm tất cả các lượt mượn của một người dùng.
-     * Tương đương: List<Borrow> findByUser(User user);
-     */
     public List<Borrow> findByUser(User user) {
-        String sql = "SELECT * FROM borrows WHERE user_id = ?";
-        return jdbcTemplate.query(sql, new BorrowRowMapper(),user.getId());
+        String sql = BASE_SELECT_SQL_JOINED + "WHERE br.user_id = ?";
+        return jdbcTemplate.query(sql,new BorrowRowMapper(),user.getId());
     }
 
     public List<Borrow> findAll(){
-        String sql = "SELECT * FROM borrows";
+        String sql = BASE_SELECT_SQL_JOINED + " ORDER BY br.id DESC";
         return jdbcTemplate.query(sql, new BorrowRowMapper());
     }
 
     public Optional<Borrow> findById(Long borrowId) {
-    String sql = "SELECT * FROM borrows WHERE id = ?";
-    try {
-        Borrow borrow = jdbcTemplate.queryForObject(sql, new BorrowRowMapper(), borrowId);
-        return Optional.ofNullable(borrow);
-    } catch (EmptyResultDataAccessException e) {
-        return Optional.empty(); // An toàn: Trả về rỗng nếu không tìm thấy
+        String sql = BASE_SELECT_SQL_JOINED + " WHERE br.id = ?";
+        try {
+            Borrow borrow = jdbcTemplate.queryForObject(sql, new BorrowRowMapper(), borrowId);
+            return Optional.ofNullable(borrow);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty(); 
+        }
     }
-}
     // === 2. PHƯƠNG THỨC existsByBookAndUserAndStatus ===
 
     /**
@@ -124,8 +129,11 @@ public class BorrowDAO {
             ps.setLong(1, borrow.getUser().getId());
             ps.setLong(2, borrow.getBook().getId());
             
-            // Chuyển đổi LocalDate sang sql.Date
-            ps.setDate(3, Date.valueOf(borrow.getBorrowDate())); 
+            if (borrow.getBorrowDate() != null){
+                ps.setDate(3, Date.valueOf(borrow.getBorrowDate()));
+            }else {
+                ps.setNull(3,java.sql.Types.DATE); // Gan NULL cho DB
+            }
             
             // Xử lý return_date có thể là null
             if (borrow.getReturnDate() != null) {

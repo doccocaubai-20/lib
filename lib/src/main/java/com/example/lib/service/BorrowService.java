@@ -36,7 +36,7 @@ public class BorrowService {
         newBorrow.setBook(book);
         newBorrow.setUser(user);
         newBorrow.setStatus("PENDING"); // Gán chuỗi "PENDING"
-
+        newBorrow.setBorrowDate(null);
         return borrowRepo.save(newBorrow);
     }
 

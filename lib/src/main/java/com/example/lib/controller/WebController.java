@@ -121,24 +121,32 @@ public class WebController {
                                       Authentication authentication,
                                       RedirectAttributes redirectAttributes) {
         
+        // BƯỚC 1: Kiểm tra xem người dùng đã đăng nhập chưa
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof UserDetails)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Bạn cần đăng nhập để mượn sách.");
+            return "redirect:/login"; // Chuyển hướng đến trang đăng nhập
+        }
+
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         User currentUser = userRepo.findByUsername(userDetails.getUsername())
-                                   .orElse(null);
+                                   .orElse(null); // Giả sử userRepo là UserDao của bạn
 
+        // BƯỚC 2: Kiểm tra xem user có tồn tại trong CSDL không
         if (currentUser == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Không tìm thấy người dùng.");
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi: Không tìm thấy người dùng của bạn.");
             return "redirect:/login";
         }
 
+        // BƯỚC 3: Bây giờ khối try...catch của bạn đã an toàn
         try {
             borrowService.createBorrowRequest(bookId, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Gửi yêu cầu mượn sách thành công! Vui lòng chờ Admin duyệt.");
         } catch (Exception e) {
+            // Bắt các lỗi nghiệp vụ (ví dụ: hết sách, đã mượn)
             redirectAttributes.addFlashAttribute("errorMessage", "Yêu cầu thất bại: " + e.getMessage());
         }
         return "redirect:/books/detail/" + bookId;
-    } 
-
+    }
     @GetMapping("/my-borrows")
     public String showMyBorrows(Model model, Authentication authentication) {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();

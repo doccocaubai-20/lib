@@ -52,6 +52,7 @@
 
                 <div class="mt-4">
     <a th:href="@{'/books/view/' + ${book.id}}" ... >Đọc sách</a>
+                    <span th:text="${book.id}"></span>
 
     <form th:action="@{'/books/borrow/' + ${book.id}}" method="post" class="d-inline-block"
       sec:authorize="isAuthenticated()">

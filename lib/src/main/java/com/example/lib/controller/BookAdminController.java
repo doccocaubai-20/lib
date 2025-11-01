@@ -1,6 +1,8 @@
 package com.example.lib.controller;
 
+import com.example.lib.model.Author;
 import com.example.lib.model.Book;
+import com.example.lib.model.Category;
 import com.example.lib.repository.AuthorDAO;
 import com.example.lib.repository.BookDAO;
 import com.example.lib.repository.CategoryDAO;
@@ -66,39 +68,87 @@ public class BookAdminController {
         return "admin/books/form";
     }
 
-    // Xử lý lưu sách (cả thêm mới và cập nhật)
-    @PostMapping("/save")
-    public String saveBook(@ModelAttribute("book") Book book,
-                           @RequestParam("imageFile") MultipartFile imageFile,
-                           @RequestParam("pdfFile") MultipartFile pdfFile,
-                           RedirectAttributes redirectAttributes) {
+  // === THAY THẾ HÀM CŨ BẰNG HÀM MỚI NÀY ===
 
-        // (Logic xử lý file của bạn giữ nguyên)
+    @PostMapping("/save")
+    public String saveBook(
+            // Nhận các giá trị từ form bằng @RequestParam
+            @RequestParam(value = "id", required = false) Long id,
+            @RequestParam("title") String title,
+            @RequestParam("author") Long authorId, // Nhận author ID
+            @RequestParam("category") Long categoryId, // Nhận category ID
+            @RequestParam("quantity") Integer quantity,
+            @RequestParam("publishDate") String publishDate,
+            @RequestParam("description") String description,
+            @RequestParam("language") String language,
+            
+            // Các file và redirect giữ nguyên
+            @RequestParam("imageFile") MultipartFile imageFile,
+            @RequestParam("pdfFile") MultipartFile pdfFile,
+            RedirectAttributes redirectAttributes) {
+
+        Book book;
+        String oldImage = null;
+        String oldPdf = null;
+
+        // 1. Kiểm tra xem đây là Sửa hay Thêm mới
+        if (id != null) {
+            // Đây là Sửa -> Tải sách cũ từ CSDL
+            book = bookRepo.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid book Id:" + id));
+            oldImage = book.getImage();
+            oldPdf = book.getPdfPath();
+        } else {
+            // Đây là Thêm mới
+            book = new Book();
+        }
+
+        // 2. Tự gán các giá trị từ form vào đối tượng
+        book.setTitle(title);
+        book.setQuantity(quantity);
+        book.setDescription(description);
+        book.setLanguage(language);
+        
+        // Chuyển đổi ngày (nếu có)
+        if (publishDate != null && !publishDate.isEmpty()) {
+            book.setPublishDate(java.time.LocalDate.parse(publishDate));
+        }
+
+        // 3. Tự tìm đối tượng Author và Category từ ID
+        Author author = authorRepo.findById(authorId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid author Id:" + authorId));
+        Category category = categoryRepo.findById(categoryId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid category Id:" + categoryId));
+        
+        book.setAuthor(author);
+        book.setCategory(category);
+
+        // 4. Xử lý file (giống như code cũ của bạn)
         if (!imageFile.isEmpty()) {
-            storageService.delete(book.getImage()); 
+            storageService.delete(oldImage); // Xóa ảnh cũ
             String imageName = storageService.store(imageFile);
             book.setImage(imageName);
         }
+
         if (!pdfFile.isEmpty()) {
-            storageService.delete(book.getPdfPath()); 
+            storageService.delete(oldPdf); // Xóa file PDF cũ
             String pdfName = storageService.store(pdfFile);
             book.setPdfPath(pdfName);
-            int pageCount = storageService.getPdfPageCount(pdfFile);
-            book.setPageCount(pageCount);
+            // Gán lại pageCount nếu PDF mới được tải lên
+            int newPageCount = storageService.getPdfPageCount(pdfFile);
+            book.setPageCount(newPageCount);
         }
 
-        // === SỬA LỖI 2 ===
-        // Phân biệt giữa tạo mới (save) và cập nhật (update)
+        // 5. Lưu (phân biệt save và update)
         if (book.getId() == null) {
             bookRepo.save(book); // Tạo mới
         } else {
             bookRepo.update(book); // Cập nhật
         }
-        
+
         redirectAttributes.addFlashAttribute("successMessage", "Lưu sách thành công!");
         return "redirect:/admin/books";
     }
-
     // (Hàm này đã đúng, giữ nguyên)
     @GetMapping("/delete/{id}")
     public String deleteBook(@PathVariable Long id, RedirectAttributes redirectAttributes) {

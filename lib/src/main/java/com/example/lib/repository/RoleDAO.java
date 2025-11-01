@@ -58,7 +58,7 @@ public class RoleDAO {
     /**
      * Tìm một vai trò (Role) bằng ID của nó.
      */
-    public Optional<Role> findById(Integer id) { // Dùng Integer vì ID trong CSDL là INT
+    public Optional<Role> findById(Long id) { 
         String sql = "SELECT id, name FROM roles WHERE id = ?";
         try {
             Role role = jdbcTemplate.queryForObject(sql, new RoleRowMapper(), id);
