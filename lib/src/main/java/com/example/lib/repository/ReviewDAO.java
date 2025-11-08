@@ -38,7 +38,6 @@ public class ReviewDAO {
             }
 
             // Tạo đối tượng User và Book "placeholder" chỉ chứa ID
-            // (Giống cách JPA xử lý khóa ngoại)
             User user = new User();
             user.setId(rs.getLong("user_id"));
             user.setUsername(rs.getString("user_username"));
@@ -59,30 +58,12 @@ public class ReviewDAO {
      * Tương đương: List<Review> findByBookId(Long bookId);
      */
     public List<Review> findByBookId(Long bookId) {
-        // SỬA SQL: Thêm JOIN và SELECT username
         String sql = "SELECT r.*, u.username as user_username " + 
                      "FROM reviews r " +
                      "JOIN users u ON r.user_id = u.id " +
                      "WHERE r.book_id = ?";
         return jdbcTemplate.query(sql, new ReviewRowMapper(),bookId);
     }
-
-    // === 2. PHƯƠNG THỨC findByUserId ===
-
-    /**
-     * Tìm tất cả đánh giá của một người dùng cụ thể.
-     * Tương đương: List<Review> findByUserId(Long userId);
-     */
-    public List<Review> findByUserId(Long userId) {
-         // SỬA SQL: Thêm JOIN và SELECT username
-        String sql = "SELECT r.*, u.username as user_username " + 
-                     "FROM reviews r " +
-                     "JOIN users u ON r.user_id = u.id " +
-                     "WHERE r.user_id = ?";
-        return jdbcTemplate.query(sql,new ReviewRowMapper(),userId);
-    }
-
-
     // === CÁC PHƯƠNG THỨC CRUD CƠ BẢN (NÊN CÓ) ===
 
     /**

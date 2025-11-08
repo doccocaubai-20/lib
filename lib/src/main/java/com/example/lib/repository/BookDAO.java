@@ -125,7 +125,6 @@ public class BookDAO {
      * Lưu một sách MỚI.
      */
     public Book save(Book book) {
-        // SQL này không bao gồm 'average_rating' vì nó nên được tính toán
         String sql = "INSERT INTO books " +
                      "(title, author_id, category_id, publish_date, quantity, pdf_path, description, image, language, page_count) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
